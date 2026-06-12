@@ -33,6 +33,8 @@ export function SettingsPanel({
     [availableTags],
   );
   const validTags = useMemo(() => new Set(sortedTags), [sortedTags]);
+  const wallpaperOpacityPercent = Math.round(wallpaperOpacity * 100);
+  const isWallpaperOpacityDirty = Math.abs(wallpaperOpacity - (catalog.wallpaperOpacity ?? 0.72)) > 0.001;
 
   useEffect(() => {
     setDraftCollections(catalog.collections);
@@ -77,7 +79,7 @@ export function SettingsPanel({
     updateCollection(collection.id, { tagRules: collection.tagRules.filter((rule) => validTags.has(rule)) });
   }
 
-  async function saveSettings(): Promise<void> {
+  function buildNextCatalog(): CatalogMetadata {
     const allCollection = draftCollections.find((collection) => collection.id === 'all') || {
       id: 'all',
       name: '全部角色',
@@ -100,12 +102,29 @@ export function SettingsPanel({
         })),
     ];
 
-    await onSaveCatalog({
+    return {
       ...catalog,
       wallpaperOpacity,
       collections,
-    });
+    };
+  }
+
+  async function saveSettings(): Promise<void> {
+    await onSaveCatalog(buildNextCatalog());
     setStatus('设置已保存');
+  }
+
+  async function saveWallpaperSettings(): Promise<void> {
+    await onSaveCatalog({
+      ...catalog,
+      wallpaperOpacity,
+    });
+    setStatus('壁纸设置已保存');
+  }
+
+  async function importWallpaper(): Promise<void> {
+    if (isWallpaperOpacityDirty) await saveWallpaperSettings();
+    await onImportWallpaper();
   }
 
   async function importIcon(collectionId: string): Promise<void> {
@@ -137,10 +156,15 @@ export function SettingsPanel({
               <p>Wallpaper</p>
               <h3>首页壁纸</h3>
             </div>
-            <button type="button" onClick={onImportWallpaper}>导入并裁切壁纸</button>
+            <div className="settings-section-actions">
+              <button type="button" onClick={saveWallpaperSettings} disabled={!isWallpaperOpacityDirty}>
+                保存壁纸设置
+              </button>
+              <button type="button" onClick={importWallpaper}>导入并裁切壁纸</button>
+            </div>
           </div>
           <label className="wallpaper-opacity-control">
-            <span>壁纸透明度 {Math.round(wallpaperOpacity * 100)}%</span>
+            <span>壁纸透明度 {wallpaperOpacityPercent}%{isWallpaperOpacityDirty ? '（未保存）' : ''}</span>
             <input
               min="0.18"
               max="1"
