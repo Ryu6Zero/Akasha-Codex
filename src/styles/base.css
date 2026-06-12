@@ -1,0 +1,275 @@
+:root {
+  --color-bg: #121017;
+  --color-panel: rgba(255, 255, 255, 0.08);
+  --color-panel-strong: rgba(32, 28, 38, 0.78);
+  --color-line: rgba(255, 236, 190, 0.24);
+  --color-line-strong: rgba(255, 236, 190, 0.58);
+  --color-text: #fff8e9;
+  --color-muted: rgba(248, 240, 225, 0.72);
+  --color-gold: #d7b56d;
+  --color-teal: #5ac8b8;
+  --shadow-panel: 0 18px 60px rgba(0, 0, 0, 0.34);
+  font-family:
+    Inter, "Microsoft YaHei", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  color: #f8f0e1;
+  background: var(--color-bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  max-width: 100%;
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text);
+  cursor: pointer;
+  line-height: 1.25;
+  padding: 0 14px;
+  text-align: center;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+  white-space: normal;
+}
+
+button:hover {
+  border-color: var(--color-line-strong);
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0) scale(0.98);
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.64;
+  transform: none;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid rgba(90, 200, 184, 0.74);
+  outline-offset: 2px;
+}
+
+input,
+textarea,
+select {
+  min-width: 0;
+  min-height: 38px;
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  background: rgba(15, 14, 20, 0.72);
+  color: var(--color-text);
+  padding: 9px 11px;
+}
+
+textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.app-root {
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(20, 18, 26, 0.96), rgba(44, 24, 30, 0.96)),
+    linear-gradient(180deg, rgba(90, 200, 184, 0.08), rgba(215, 181, 109, 0.06));
+}
+
+.home-wallpaper {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-position: center;
+  background-size: cover;
+  opacity: var(--wallpaper-opacity, 0.72);
+  transform: scale(1.02);
+  transition:
+    opacity 220ms ease,
+    transform 520ms ease;
+}
+
+.home-view::after {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  content: "";
+  background:
+    radial-gradient(circle at 50% 48%, rgba(90, 200, 184, 0.13), transparent 32%),
+    linear-gradient(rgba(12, 14, 20, 0.36), rgba(12, 14, 20, 0.76));
+  pointer-events: none;
+}
+
+.glass-panel {
+  border: 1px solid var(--color-line);
+  background: var(--color-panel);
+  box-shadow: var(--shadow-panel);
+}
+
+@supports (backdrop-filter: blur(18px)) {
+  .glass-panel,
+  .catalog-card,
+  .preview-drawer,
+  .collection-tile,
+  .editor-panel,
+  .settings-panel,
+  .cropper-panel,
+  .lightbox-frame {
+    backdrop-filter: blur(18px) saturate(138%);
+  }
+}
+
+.primary-button,
+.enter-catalog-button {
+  background: linear-gradient(135deg, #b76e35, #d7b56d);
+  border-color: rgba(255, 229, 164, 0.8);
+  color: #181116;
+  font-weight: 800;
+}
+
+.danger-button {
+  border-color: rgba(255, 110, 110, 0.4);
+  color: #ffb4a9;
+}
+
+.home-view {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 100dvh;
+  background:
+    linear-gradient(rgba(12, 14, 20, 0.34), rgba(12, 14, 20, 0.82)),
+    linear-gradient(135deg, #23131b, #111922 54%, #3b241a);
+  background-size: cover;
+  background-position: center;
+}
+
+.home-settings {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  z-index: 1;
+  width: 42px;
+  min-width: 42px;
+  padding: 0;
+}
+
+.home-identity {
+  position: absolute;
+  z-index: 1;
+  top: 11vh;
+  left: min(7vw, 84px);
+}
+
+.home-identity p,
+.home-identity span,
+.top-nav p,
+.detail-topbar p,
+.editor-header p {
+  margin: 0;
+  color: var(--color-gold);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.home-identity h1 {
+  margin: 4px 0;
+  color: var(--color-text);
+  font-size: clamp(2.8rem, 8vw, 4rem);
+  line-height: 1;
+}
+
+.enter-catalog-button {
+  position: relative;
+  z-index: 1;
+  width: min(196px, 64vw);
+  min-height: 56px;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.42);
+  overflow: hidden;
+  animation: enter-button-in 520ms cubic-bezier(0.2, 0.72, 0.22, 1);
+}
+
+.enter-catalog-button::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.32) 45%, transparent 74%);
+  transform: translateX(-120%);
+  transition: transform 420ms ease;
+}
+
+.enter-catalog-button:hover::after {
+  transform: translateX(120%);
+}
+
+.enter-catalog-symbol {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(24, 17, 22, 0.18);
+  font-size: 0.95rem;
+  font-weight: 900;
+}
+
+@keyframes enter-button-in {
+  from {
+    transform: translateY(12px) scale(0.94);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
+}

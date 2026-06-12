@@ -1,0 +1,131 @@
+@media (max-width: 1180px) {
+  .catalog-workspace {
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  }
+
+  .detail-body {
+    grid-template-columns: minmax(240px, 36vw) minmax(0, 1fr);
+  }
+
+  .catalog-toolbar label {
+    flex-basis: min(220px, 100%);
+  }
+}
+
+@media (max-width: 980px) {
+  body {
+    overflow: auto;
+  }
+
+  .app-root,
+  .home-view,
+  .collections-view,
+  .catalog-view {
+    min-height: 100vh;
+    min-height: 100dvh;
+    height: auto;
+    overflow: visible;
+  }
+
+  .collections-view,
+  .catalog-view {
+    padding: 14px;
+  }
+
+  .home-identity {
+    left: 24px;
+    right: 24px;
+  }
+
+  .home-identity h1 {
+    font-size: 3rem;
+  }
+
+  .catalog-toolbar,
+  .catalog-workspace,
+  .detail-body,
+  .editor-two-column,
+  .category-editor-card,
+  .asset-import-grid,
+  .settings-grid,
+  .voice-editor-row {
+    grid-template-columns: 1fr;
+  }
+
+  .category-rules-field,
+  .category-editor-actions {
+    grid-column: 1 / -1;
+  }
+
+  .catalog-workspace {
+    height: auto;
+  }
+
+  .character-grid {
+    grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
+    max-height: none;
+    overflow: visible;
+  }
+
+  .preview-drawer {
+    grid-template-rows: 360px auto auto;
+  }
+
+  .fullscreen-detail {
+    position: fixed;
+    overflow: auto;
+  }
+
+  .detail-body {
+    min-height: auto;
+  }
+
+  .detail-hero {
+    min-height: 48dvh;
+  }
+
+  .detail-info {
+    overflow: visible;
+    padding-right: 0;
+  }
+}
+
+@media (max-width: 620px) {
+  .top-nav,
+  .detail-topbar,
+  .lightbox-toolbar,
+  .lightbox-navigation {
+    align-items: stretch;
+  }
+
+  .top-nav > *,
+  .detail-actions,
+  .drawer-actions,
+  .category-editor-actions,
+  .lightbox-tools,
+  .lightbox-navigation button {
+    width: 100%;
+  }
+
+  .detail-actions,
+  .drawer-actions {
+    justify-content: stretch;
+  }
+
+  .detail-actions button,
+  .drawer-actions button,
+  .catalog-toolbar button,
+  .top-nav button {
+    flex: 1 1 140px;
+  }
+
+  .portrait-gallery,
+  .editable-gallery {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+
+  .cropper-stage {
+    transform: scale(0.88);
+    transform-origin: center;
+  }
+}

@@ -1,0 +1,57 @@
+name: Bug Report
+description: Report a reproducible problem in 绯典阁.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve 绯典阁. Please do not attach private libraries, API keys, or copyrighted asset packs.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: App version or commit SHA.
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Windows portable
+        - Windows dev
+        - Android dev
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps To Reproduce
+      description: List exact actions from launch to failure.
+      placeholder: |
+        1. Open catalog
+        2. Click ...
+        3. See ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Result
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs Or Screenshots
+      description: Remove local paths, private names, and personal assets before attaching.
+      render: text

@@ -1,0 +1,204 @@
+const fs = require('fs');
+const path = require('path');
+const { execFileSync } = require('child_process');
+
+const root = process.cwd();
+
+const requiredIgnorePatterns = [
+  'node_modules/',
+  'dist/',
+  'release/',
+  'library/',
+  'config/',
+  '.local-appdata/',
+  '.npm-cache/',
+  '*.log',
+  'vite-*.log',
+  '.env',
+  '.env.*',
+  'android/.gradle/',
+  'android/app/build/',
+  'android/build/',
+  'android/app/src/main/assets/public/',
+  'docs/progress.md',
+  'docs/project-memory.md',
+];
+
+const ignoredDirectories = new Set([
+  '.git',
+  'node_modules',
+  'dist',
+  'release',
+  'library',
+  'config',
+  '.local-appdata',
+  '.npm-cache',
+  '.gradle',
+  'build',
+]);
+
+const localOnlyFiles = new Set([
+  normalizePath('docs/progress.md'),
+  normalizePath('docs/project-memory.md'),
+]);
+
+const forbiddenRootEntries = [
+  '.tmp-import-test',
+  '.local-appdata',
+  '.npm-cache',
+];
+
+const secretPatterns = [
+  { name: 'OpenAI project key', pattern: /\bsk-proj-[A-Za-z0-9_-]{20,}\b/ },
+  { name: 'OpenAI key', pattern: /\bsk-[A-Za-z0-9_-]{30,}\b/ },
+  { name: 'Anthropic key', pattern: /\bsk-ant-[A-Za-z0-9_-]{20,}\b/ },
+  { name: 'private key block', pattern: /-----BEGIN (?:RSA |EC |OPENSSH |)PRIVATE KEY-----/ },
+];
+
+const localPathPatterns = [
+  { name: 'Windows user path', pattern: /[A-Z]:\\Users\\/i },
+  { name: 'workspace absolute path', pattern: /[A-Z]:\\(?:工作|数据收藏|宸|瀹)/i },
+];
+
+const failures = [];
+const warnings = [];
+
+checkGitignore();
+checkTrackedFiles();
+checkRootResidues();
+scanPublicFiles();
+
+if (warnings.length) {
+  console.log('Open-source audit warnings:');
+  for (const warning of warnings) console.log(`- ${warning}`);
+}
+
+if (failures.length) {
+  console.error('Open-source audit failed:');
+  for (const failure of failures) console.error(`- ${failure}`);
+  process.exit(1);
+}
+
+console.log('Open-source audit passed.');
+
+function checkGitignore() {
+  const gitignorePath = path.join(root, '.gitignore');
+  if (!fs.existsSync(gitignorePath)) {
+    failures.push('Missing .gitignore.');
+    return;
+  }
+
+  const patterns = fs.readFileSync(gitignorePath, 'utf8')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith('#'));
+  const patternSet = new Set(patterns);
+
+  for (const pattern of requiredIgnorePatterns) {
+    if (!patternSet.has(pattern)) {
+      failures.push(`.gitignore is missing required pattern: ${pattern}`);
+    }
+  }
+}
+
+function checkRootResidues() {
+  for (const entry of forbiddenRootEntries) {
+    if (fs.existsSync(path.join(root, entry))) {
+      failures.push(`Build/cache residue exists at repository root: ${entry}`);
+    }
+  }
+
+  for (const entry of ['dist', 'release', 'library', 'config']) {
+    if (fs.existsSync(path.join(root, entry))) {
+      warnings.push(`${entry}/ exists locally and is ignored; do not force-add it to Git.`);
+    }
+  }
+}
+
+function checkTrackedFiles() {
+  let trackedFiles = [];
+  try {
+    trackedFiles = execFileSync('git', ['ls-files'], { cwd: root, encoding: 'utf8' })
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map(normalizePath);
+  } catch {
+    warnings.push('Unable to inspect git tracked files; run this audit inside a Git repository for strict release checks.');
+    return;
+  }
+
+  const forbiddenTrackedPatterns = [
+    /^library\//,
+    /^release\//,
+    /^dist\//,
+    /^config\//,
+    /^\.local-appdata\//,
+    /^\.npm-cache\//,
+    /^android\/app\/src\/main\/assets\/public\//,
+    /^docs\/progress\.md$/,
+    /^docs\/project-memory\.md$/,
+    /(^|\/)\.env(?:\.|$)/,
+    /(^|\/)credentials[^/]*$/i,
+    /\.(?:pem|key|p12|pfx|db|sqlite|sqlite3)$/i,
+  ];
+
+  for (const filePath of trackedFiles) {
+    if (forbiddenTrackedPatterns.some((pattern) => pattern.test(filePath))) {
+      failures.push(`Forbidden tracked file detected: ${filePath}`);
+    }
+  }
+}
+
+function scanPublicFiles() {
+  for (const filePath of listFiles(root)) {
+    const relativePath = normalizePath(path.relative(root, filePath));
+    if (localOnlyFiles.has(relativePath)) continue;
+    if (isBinaryLike(relativePath)) continue;
+
+    const text = safeReadText(filePath);
+    if (text === null) continue;
+
+    for (const { name, pattern } of secretPatterns) {
+      if (pattern.test(text)) failures.push(`${name} detected in ${relativePath}`);
+    }
+
+    for (const { name, pattern } of localPathPatterns) {
+      if (pattern.test(text)) failures.push(`${name} detected in ${relativePath}`);
+    }
+  }
+}
+
+function listFiles(directory) {
+  const entries = fs.readdirSync(directory, { withFileTypes: true });
+  return entries.flatMap((entry) => {
+    const entryPath = path.join(directory, entry.name);
+    const relativePath = normalizePath(path.relative(root, entryPath));
+    if (entry.isDirectory()) {
+      if (ignoredDirectories.has(entry.name)) return [];
+      if (
+        relativePath === 'android/app/build'
+        || relativePath === 'android/build'
+        || relativePath === 'android/app/src/main/assets/public'
+      ) return [];
+      return listFiles(entryPath);
+    }
+    return entry.isFile() ? [entryPath] : [];
+  });
+}
+
+function safeReadText(filePath) {
+  try {
+    return fs.readFileSync(filePath, 'utf8');
+  } catch {
+    return null;
+  }
+}
+
+function isBinaryLike(relativePath) {
+  return /\.(png|jpe?g|webp|gif|ico|mp3|wav|ogg|m4a|flac|zip|exe|dll|asar|bin)$/i.test(relativePath);
+}
+
+function normalizePath(value) {
+  return value.replace(/\\/g, '/');
+}

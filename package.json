@@ -1,0 +1,62 @@
+{
+  "name": "akasha-codex",
+  "version": "0.1.0",
+  "description": "Local-first ACG character codex app.",
+  "private": true,
+  "license": "MIT",
+  "author": "Akasha Codex contributors",
+  "type": "module",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "clean": "npm run clean:dist",
+    "clean:dist": "powershell -NoProfile -Command \"if (Test-Path dist) { Remove-Item -Recurse -Force dist }\"",
+    "clean:release": "powershell -NoProfile -Command \"if (Test-Path release) { Remove-Item -Recurse -Force release }; Remove-Item -Force -ErrorAction SilentlyContinue vite-*.log,*.log,*.png\"",
+    "cleanup:package": "powershell -NoProfile -Command \"if (Test-Path release/win-unpacked) { Remove-Item -Recurse -Force release/win-unpacked }; Remove-Item -Force -ErrorAction SilentlyContinue release/builder-debug.yml\"",
+    "audit:open-source": "node tools/audit-open-source.cjs",
+    "release:check": "node tools/check-github-release-ready.cjs",
+    "prepare:open-source": "node --check tools/audit-open-source.cjs && node --check electron/main.cjs && node --check electron/preload.cjs && node --check electron/catalog-service.cjs && node --check electron/character-service.cjs && npm run build && npm run clean:dist && npm run audit:open-source",
+    "dev": "vite",
+    "build": "npm run clean && tsc && vite build",
+    "preview": "vite preview",
+    "desktop": "npm run build && electron .",
+    "package:win": "npm run clean:release && npm run build && electron-builder --win portable && npm run cleanup:package",
+    "android:sync": "npm run build && npx cap sync android",
+    "android:build": "npm run android:sync && powershell -NoProfile -Command \"Push-Location android; .\\gradlew.bat assembleDebug; $code=$LASTEXITCODE; Pop-Location; exit $code\""
+  },
+  "dependencies": {
+    "@capacitor/core": "^8.4.0",
+    "@capacitor/filesystem": "^8.1.2",
+    "@capacitor/preferences": "^8.0.1",
+    "@capawesome/capacitor-file-picker": "^8.0.2",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.4.0",
+    "@capacitor/cli": "^8.4.0",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.2",
+    "electron": "^39.2.7",
+    "electron-builder": "^26.0.12",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.16"
+  },
+  "build": {
+    "appId": "local.acgplan.app",
+    "productName": "绯典阁",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "assets/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "portable",
+      "icon": "assets/brand/icon.ico"
+    }
+  }
+}
