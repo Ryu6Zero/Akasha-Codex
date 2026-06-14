@@ -2,7 +2,7 @@ export type AssetType = 'avatar' | 'portrait' | 'voice' | 'model' | 'attachment'
 
 export type CatalogAssetType = 'wallpaper' | 'collectionIcon';
 
-export type SortMode = 'updatedAt' | 'createdAt' | 'name' | 'sourceTitle';
+export type SortMode = 'updatedAt' | 'createdAt' | 'createdAtDesc' | 'name' | 'sourceTitle';
 
 export type StorySortMode = 'updatedAt' | 'createdAt' | 'title';
 

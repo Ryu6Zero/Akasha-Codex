@@ -18,3 +18,10 @@ tools/**/obj/
 android/app/src/main/assets/public/
 docs/progress.md
 docs/project-memory.md
+
+# Feicai product manager skill group
+AGENTS.md
+使用说明.md
+.agents/
+.codex/
+.feicai-backup/

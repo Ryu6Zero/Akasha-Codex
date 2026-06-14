@@ -47,7 +47,7 @@ function createCatalogService(context, dialog) {
       defaultCollectionId: typeof rawCatalog.defaultCollectionId === 'string'
         ? rawCatalog.defaultCollectionId
         : fallback.defaultCollectionId,
-      defaultSortMode: ['updatedAt', 'createdAt', 'name', 'sourceTitle'].includes(rawCatalog.defaultSortMode)
+      defaultSortMode: ['updatedAt', 'createdAt', 'createdAtDesc', 'name', 'sourceTitle'].includes(rawCatalog.defaultSortMode)
         ? rawCatalog.defaultSortMode
         : fallback.defaultSortMode,
       collections,

@@ -92,7 +92,10 @@ export function CatalogView({
           <span>排序</span>
           <select value={sortMode} onChange={(event) => onSortModeChange(event.target.value as SortMode)}>
             <option value="updatedAt">最近更新</option>
-            <option value="createdAt">创建时间</option>
+            <option value="createdAtDesc">创建时间倒序</option>
+            <option value="createdAt" hidden>
+              创建时间倒序
+            </option>
             <option value="name">名称</option>
             <option value="sourceTitle">来源</option>
           </select>

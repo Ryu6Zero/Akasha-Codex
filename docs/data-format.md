@@ -31,7 +31,7 @@ library/
 type CatalogMetadata = {
   wallpaperPath?: string;
   defaultCollectionId: string;
-  defaultSortMode: 'updatedAt' | 'createdAt' | 'name' | 'sourceTitle';
+  defaultSortMode: 'updatedAt' | 'createdAt' | 'createdAtDesc' | 'name' | 'sourceTitle';
   collections: CatalogCollection[];
 };
 

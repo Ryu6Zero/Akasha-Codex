@@ -81,6 +81,6 @@ function characterMatchesCollectionRule(character: Character, rule: string): boo
 function sortCharacters(a: Character, b: Character, sortMode: SortMode): number {
   if (sortMode === 'name') return a.name.localeCompare(b.name, 'zh-CN');
   if (sortMode === 'sourceTitle') return a.sourceTitle.localeCompare(b.sourceTitle, 'zh-CN');
-  if (sortMode === 'createdAt') return b.createdAt.localeCompare(a.createdAt);
+  if (sortMode === 'createdAt' || sortMode === 'createdAtDesc') return b.createdAt.localeCompare(a.createdAt);
   return b.updatedAt.localeCompare(a.updatedAt);
 }
