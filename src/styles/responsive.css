@@ -20,7 +20,8 @@
   .app-root,
   .home-view,
   .collections-view,
-  .catalog-view {
+  .catalog-view,
+  .story-view {
     min-height: 100vh;
     min-height: 100dvh;
     height: auto;
@@ -43,9 +44,11 @@
 
   .catalog-toolbar,
   .catalog-workspace,
+  .story-workspace,
   .detail-body,
   .editor-two-column,
   .category-editor-card,
+  .story-category-card,
   .asset-import-grid,
   .settings-grid,
   .voice-editor-row {
@@ -59,6 +62,31 @@
 
   .catalog-workspace {
     height: auto;
+  }
+
+  .story-workspace {
+    min-height: auto;
+    overflow: visible;
+  }
+
+  .story-editor-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .story-inspector {
+    order: -1;
+  }
+
+  .story-list,
+  .story-reader {
+    overflow: visible;
+  }
+
+  .story-list {
+    border-right: 0;
+    border-bottom: 1px solid rgba(255, 236, 190, 0.12);
+    padding-right: 0;
+    padding-bottom: 14px;
   }
 
   .character-grid {
@@ -115,13 +143,55 @@
   .detail-actions button,
   .drawer-actions button,
   .catalog-toolbar button,
-  .top-nav button {
+  .top-nav button,
+  .story-compose-toolbar button {
     flex: 1 1 140px;
+  }
+
+  .blog-editor-panel {
+    width: calc(100vw - 20px);
+    max-height: calc(100dvh - 20px);
+    padding: 12px;
+  }
+
+  .story-writing-surface {
+    padding: 14px;
+  }
+
+  .story-title-input {
+    font-size: 1.65rem;
+  }
+
+  .story-block-toolbar {
+    align-items: stretch;
+  }
+
+  .story-block-toolbar > * {
+    flex: 1 1 120px;
   }
 
   .portrait-gallery,
   .editable-gallery {
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+
+  .sound-settings-grid,
+  .health-issue,
+  .voice-asset-player {
+    grid-template-columns: 1fr;
+  }
+
+  .library-health-panel {
+    margin: 0;
+  }
+
+  .health-summary-toggle {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .health-summary-action {
+    align-self: start;
   }
 
   .cropper-stage {

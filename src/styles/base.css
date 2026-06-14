@@ -220,6 +220,7 @@ textarea {
 .enter-catalog-button {
   position: relative;
   z-index: 1;
+  grid-area: 1 / 1;
   width: min(196px, 64vw);
   min-height: 56px;
   border-radius: 8px;
@@ -227,6 +228,11 @@ textarea {
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.42);
   overflow: hidden;
   animation: enter-button-in 520ms cubic-bezier(0.2, 0.72, 0.22, 1);
+}
+
+.secondary-entry-button {
+  margin-top: 148px;
+  background: linear-gradient(135deg, #2f847d, #d7b56d);
 }
 
 .enter-catalog-button::after {

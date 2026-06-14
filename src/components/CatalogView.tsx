@@ -13,6 +13,7 @@ type CatalogViewProps = {
   selectedTag: string;
   sortMode: SortMode;
   onBackCollections: () => void;
+  onOpenStories: () => void;
   onSelectCollection: (collectionId: string) => void;
   onSearchQueryChange: (value: string) => void;
   onSelectedTagChange: (value: string) => void;
@@ -38,6 +39,7 @@ export function CatalogView({
   selectedTag,
   sortMode,
   onBackCollections,
+  onOpenStories,
   onSelectCollection,
   onSearchQueryChange,
   onSelectedTagChange,
@@ -105,6 +107,9 @@ export function CatalogView({
         ) : null}
         <button type="button" onClick={onOpenSettings}>
           设置
+        </button>
+        <button type="button" onClick={onOpenStories}>
+          故事库
         </button>
       </header>
 

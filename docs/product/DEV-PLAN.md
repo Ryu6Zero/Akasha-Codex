@@ -54,3 +54,16 @@ Status: in progress.
 - Clean historical `dist` and `release` output before builds.
 - Add README, MIT license, contribution guide, open-source checklist, and audit script.
 - Run syntax checks, production build, open-source audit, and desktop smoke checks before publishing.
+
+## Phase 7: Knowledge Base And Story Archive
+
+Status: implemented.
+
+- Add `story-catalog.json` and `stories/<story-id>/story.json` local library files.
+- Add desktop IPC and mobile client methods for story catalog, story CRUD, story image import, and story image removal.
+- Add a story archive module with category filters, tag filters, search, sorting, story reader, and story editor.
+- Add rich text blocks for headings, paragraphs, quotes, and images.
+- Render `[[Character Name]]` wiki links inside story text and open encyclopedia detail windows from those links.
+- Replace the expanded all-character checklist with a blog-style editor and searchable `@` reference insertion.
+- Add explicit story-to-character links and derived backlinks on character detail.
+- Keep story backlinks derived from story records instead of duplicating reference state into character JSON.

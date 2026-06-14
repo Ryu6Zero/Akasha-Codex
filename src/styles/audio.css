@@ -1,0 +1,39 @@
+.voice-asset-player {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.voice-asset-player > button {
+  min-width: 64px;
+}
+
+.voice-player-main {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.voice-player-main p,
+.voice-player-main small {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.voice-player-main input[type='range'],
+.sound-settings-grid input[type='range'] {
+  width: 100%;
+}
+
+.sound-settings-grid {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.65fr) minmax(220px, 1fr);
+  gap: 12px;
+}
+
+.sound-settings-grid label {
+  display: grid;
+  gap: 8px;
+}

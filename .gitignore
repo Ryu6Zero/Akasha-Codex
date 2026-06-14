@@ -1,8 +1,8 @@
 node_modules/
-dist/
-release/
-library/
-config/
+/dist/
+/release/
+/library/
+/config/
 .local-appdata/
 .npm-cache/
 *.log
@@ -13,6 +13,8 @@ vite-*.log
 android/.gradle/
 android/app/build/
 android/build/
+tools/**/bin/
+tools/**/obj/
 android/app/src/main/assets/public/
 docs/progress.md
 docs/project-memory.md

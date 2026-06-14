@@ -5,6 +5,7 @@ type CollectionsViewProps = {
   collectionCounts: Map<string, number>;
   onBackHome: () => void;
   onSelectCollection: (collectionId: string) => void;
+  onOpenStories: () => void;
   onOpenSettings: () => void;
 };
 
@@ -13,6 +14,7 @@ export function CollectionsView({
   collectionCounts,
   onBackHome,
   onSelectCollection,
+  onOpenStories,
   onOpenSettings,
 }: CollectionsViewProps) {
   return (
@@ -27,6 +29,9 @@ export function CollectionsView({
         </div>
         <button type="button" onClick={onOpenSettings}>
           设置
+        </button>
+        <button type="button" onClick={onOpenStories}>
+          故事库
         </button>
       </header>
 

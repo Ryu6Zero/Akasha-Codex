@@ -1,5 +1,13 @@
 # 绯典阁 Changelog
 
+## 2026-06-12
+
+- Expanded the app into a local knowledge base with separate encyclopedia and story archive modules.
+- Added story categories, story CRUD, rich text blocks, story image imports, and local `story-catalog.json` / `stories/<id>/story.json` storage.
+- Added `[[Character Name]]` story links that open encyclopedia detail windows.
+- Added derived character backlinks showing which stories reference each encyclopedia entry.
+- Added `Knowledge-Base-Development-Manual.md` for future story/backlink/MCP or skill work.
+
 ## 2026-06-10
 
 - Reworked fullscreen detail into inline view/edit modes and removed the blocked editor-overlay flow.

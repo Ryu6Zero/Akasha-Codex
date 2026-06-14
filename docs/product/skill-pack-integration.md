@@ -35,4 +35,4 @@ The durable 绯典阁 product method lives in this folder:
 docs/product/
 ```
 
-Future contributors can continue from `Product-Manual.md`, `Product-Spec.md`, `DEV-PLAN.md`, and `CHANGELOG.md` even if the original local skill pack is unavailable.
+Future contributors can continue from `Product-Manual.md`, `Product-Spec.md`, `DEV-PLAN.md`, `Knowledge-Base-Development-Manual.md`, and `CHANGELOG.md` even if the original local skill pack is unavailable.

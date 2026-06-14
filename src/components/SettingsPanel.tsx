@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { CatalogCollection, CatalogMetadata, LibrarySettings } from '../types';
+import type { AppPreferences, CatalogCollection, CatalogMetadata, LibrarySettings } from '../types';
 
 type SettingsPanelProps = {
   settings: LibrarySettings | null;
   catalog: CatalogMetadata;
+  appPreferences: AppPreferences;
   availableTags: string[];
   onSelectLibraryRoot: () => void | Promise<void>;
   onOpenLibraryRoot: () => void | Promise<void>;
   onImportWallpaper: () => void | Promise<void>;
   onSaveCatalog: (catalog: CatalogMetadata) => void | Promise<void>;
+  onSaveAppPreferences: (preferences: AppPreferences) => void | Promise<void>;
   onImportCollectionIcon?: (collectionId: string) => void | Promise<void>;
   onClose: () => void;
 };
@@ -16,16 +18,20 @@ type SettingsPanelProps = {
 export function SettingsPanel({
   settings,
   catalog,
+  appPreferences,
   availableTags,
   onSelectLibraryRoot,
   onOpenLibraryRoot,
   onImportWallpaper,
   onSaveCatalog,
+  onSaveAppPreferences,
   onImportCollectionIcon,
   onClose,
 }: SettingsPanelProps) {
   const [draftCollections, setDraftCollections] = useState<CatalogCollection[]>(() => catalog.collections);
   const [wallpaperOpacity, setWallpaperOpacity] = useState(catalog.wallpaperOpacity ?? 0.72);
+  const [soundMode, setSoundMode] = useState<AppPreferences['soundMode']>(appPreferences.soundMode);
+  const [soundVolume, setSoundVolume] = useState(appPreferences.soundVolume);
   const [status, setStatus] = useState('');
 
   const sortedTags = useMemo(
@@ -40,6 +46,11 @@ export function SettingsPanel({
     setDraftCollections(catalog.collections);
     setWallpaperOpacity(catalog.wallpaperOpacity ?? 0.72);
   }, [catalog.collections, catalog.wallpaperOpacity]);
+
+  useEffect(() => {
+    setSoundMode(appPreferences.soundMode);
+    setSoundVolume(appPreferences.soundVolume);
+  }, [appPreferences]);
 
   function updateCollection(collectionId: string, patch: Partial<CatalogCollection>): void {
     setDraftCollections((collections) =>
@@ -132,6 +143,11 @@ export function SettingsPanel({
     await onImportCollectionIcon?.(collectionId);
   }
 
+  async function saveSoundSettings(): Promise<void> {
+    await onSaveAppPreferences({ soundMode, soundVolume });
+    setStatus('音效设置已保存');
+  }
+
   return (
     <div className="settings-overlay" role="dialog" aria-modal="true" aria-label="设置">
       <section className="settings-panel">
@@ -183,6 +199,43 @@ export function SettingsPanel({
           <button className="primary-button" type="button" onClick={onSelectLibraryRoot}>选择资料库目录</button>
           <button type="button" onClick={onOpenLibraryRoot}>打开当前资料库</button>
         </div>
+
+        <section className="settings-category-manager glass-panel">
+          <div className="settings-section-title">
+            <div>
+              <p>Sound</p>
+              <h3>界面音效</h3>
+            </div>
+            <button type="button" onClick={saveSoundSettings}>保存音效设置</button>
+          </div>
+          <div className="sound-settings-grid">
+            <label>
+              模式
+              <select value={soundMode} onChange={(event) => {
+                setSoundMode(event.target.value as AppPreferences['soundMode']);
+                setStatus('');
+              }}>
+                <option value="off">关闭</option>
+                <option value="soft">轻量</option>
+                <option value="full">完整</option>
+              </select>
+            </label>
+            <label>
+              音量 {Math.round(soundVolume * 100)}%
+              <input
+                min="0"
+                max="1"
+                step="0.01"
+                type="range"
+                value={soundVolume}
+                onChange={(event) => {
+                  setSoundVolume(Number(event.target.value));
+                  setStatus('');
+                }}
+              />
+            </label>
+          </div>
+        </section>
 
         <section className="settings-category-manager glass-panel">
           <div className="settings-section-title">

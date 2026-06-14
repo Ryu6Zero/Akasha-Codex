@@ -5,13 +5,20 @@ type HomeViewProps = {
   catalog: CatalogMetadata;
   isLoading: boolean;
   onEnter: () => void;
+  onEnterStories: () => void;
   onOpenSettings: () => void;
+  onPlaySound: () => void;
 };
 
-export function HomeView({ catalog, isLoading, onEnter, onOpenSettings }: HomeViewProps) {
+export function HomeView({ catalog, isLoading, onEnter, onEnterStories, onOpenSettings, onPlaySound }: HomeViewProps) {
   function enterCatalog(): void {
-    playUiSound();
+    onPlaySound();
     onEnter();
+  }
+
+  function enterStories(): void {
+    onPlaySound();
+    onEnterStories();
   }
 
   return (
@@ -32,29 +39,10 @@ export function HomeView({ catalog, isLoading, onEnter, onOpenSettings }: HomeVi
         <span className="enter-catalog-symbol" aria-hidden="true">图</span>
         <span>{isLoading ? '读取中' : '进入图鉴'}</span>
       </button>
+      <button className="enter-catalog-button secondary-entry-button" type="button" onClick={enterStories} disabled={isLoading}>
+        <span className="enter-catalog-symbol" aria-hidden="true">文</span>
+        <span>{isLoading ? '读取中' : '故事库'}</span>
+      </button>
     </section>
   );
-}
-
-function playUiSound(): void {
-  try {
-    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!AudioContextClass) return;
-    const context = new AudioContextClass();
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(520, context.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(860, context.currentTime + 0.08);
-    gain.gain.setValueAtTime(0.0001, context.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.055, context.currentTime + 0.012);
-    gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.12);
-    oscillator.connect(gain);
-    gain.connect(context.destination);
-    oscillator.start();
-    oscillator.stop(context.currentTime + 0.13);
-    window.setTimeout(() => void context.close(), 180);
-  } catch {
-    // Sound is optional; blocked audio should never block navigation.
-  }
 }

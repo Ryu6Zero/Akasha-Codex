@@ -99,3 +99,29 @@ Legacy `voicePaths[]` and model fields remain readable.
 - Image lightbox and voice playback work for local assets.
 - Removing a character or asset persists to disk.
 - Three.js preview dependencies are removed from runtime dependencies.
+
+## Knowledge Base Expansion
+
+The encyclopedia is now one module inside a broader local knowledge base. Its responsibility remains character entries, portraits, local assets, notes, and character story material. A separate story archive module stores rich text records such as game-story summaries, lore notes, and illustrated article-like entries.
+
+The story archive must support:
+
+- Story categories with the same mental model as encyclopedia collections: manual category assignment plus tag-rule matching.
+- Story search across title, subtitle, summary, tags, body text, captions, and linked entry names.
+- Rich text blocks for headings, paragraphs, quotes, and images.
+- Inline wiki links written as `[[Character Name]]`; clicking the rendered link opens the matching encyclopedia entry detail window.
+- Explicit linked encyclopedia entries for cases where a story should reference a character even without an inline mention.
+- Derived backlinks on encyclopedia entries showing which stories cite the entry, similar to an Obsidian backlink panel.
+
+Story data is local-first and file based:
+
+```text
+library/
+  story-catalog.json
+  stories/
+    <story-id>/
+      story.json
+      images/
+```
+
+`story-catalog.json` stores story categories and default story sorting. `story.json` stores title, subtitle, summary, tags, `categoryIds[]`, `linkedCharacterIds[]`, rich text `blocks[]`, cover image path, and timestamps. Story image imports are copied into the story folder and never referenced from arbitrary source paths as canonical assets.

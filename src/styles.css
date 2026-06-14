@@ -1,5 +1,8 @@
 ﻿@import './styles/base.css';
 @import './styles/catalog.css';
 @import './styles/overlays.css';
+@import './styles/audio.css';
+@import './styles/dialogs.css';
+@import './styles/knowledge.css';
 @import './styles/responsive.css';
 

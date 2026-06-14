@@ -1,12 +1,14 @@
-const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron');
 const path = require('path');
 const { createCatalogService } = require('./catalog-service.cjs');
 const { createCharacterService } = require('./character-service.cjs');
 const { createLibraryContext } = require('./library-context.cjs');
+const { createStoryService } = require('./story-service.cjs');
 
 const context = createLibraryContext(app);
 const catalogService = createCatalogService(context, dialog);
 const characterService = createCharacterService(context, dialog);
+const storyService = createStoryService(context, dialog);
 
 function registerIpcHandlers() {
   ipcMain.handle('catalog:get', () => catalogService.loadCatalog());
@@ -21,12 +23,20 @@ function registerIpcHandlers() {
   ipcMain.handle('catalog:saveCroppedWallpaper', (_event, imageDataUrl, fileName) =>
     catalogService.saveCroppedWallpaper(imageDataUrl, fileName),
   );
+  ipcMain.handle('stories:getCatalog', () => storyService.loadStoryCatalog());
+  ipcMain.handle('stories:saveCatalog', (_event, catalog) => storyService.saveStoryCatalog(catalog));
+  ipcMain.handle('stories:getAll', () => storyService.loadStories());
+  ipcMain.handle('stories:save', (_event, story) => storyService.saveStoryJson(story));
+  ipcMain.handle('stories:delete', (_event, story) => storyService.deleteStory(story));
+  ipcMain.handle('stories:importImage', (_event, story, blockId) => storyService.importStoryImage(story, blockId));
+  ipcMain.handle('stories:removeImage', (_event, story, assetPath) => storyService.removeStoryImage(story, assetPath));
   ipcMain.handle('library:getCharacters', () => characterService.loadLibraryCharacters());
   ipcMain.handle('library:saveCharacter', (_event, character) => characterService.saveCharacterJson(character));
   ipcMain.handle('library:deleteCharacter', (_event, character) => characterService.deleteCharacter(character));
   ipcMain.handle('library:getInfo', () => ({
     libraryRoot: context.getLibraryRoot(),
     charactersRoot: context.getCharactersRoot(),
+    storiesRoot: context.getStoriesRoot(),
   }));
   ipcMain.handle('library:openRoot', async () => {
     const libraryRoot = context.getLibraryRoot();
@@ -75,6 +85,7 @@ function createWindow() {
     minWidth: 760,
     minHeight: 620,
     title: '绯典阁',
+    autoHideMenuBar: true,
     icon: path.join(__dirname, '..', 'assets', 'brand', 'icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
@@ -84,12 +95,15 @@ function createWindow() {
     },
   });
 
+  mainWindow.setMenu(null);
   mainWindow.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
 }
 
 app.whenReady().then(() => {
+  Menu.setApplicationMenu(null);
   context.ensureLibraryStructure();
   catalogService.loadCatalog();
+  storyService.loadStoryCatalog();
   registerIpcHandlers();
   createWindow();
 

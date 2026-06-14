@@ -15,6 +15,8 @@
     "audit:open-source": "node tools/audit-open-source.cjs",
     "release:check": "node tools/check-github-release-ready.cjs",
     "prepare:open-source": "node --check tools/audit-open-source.cjs && node --check electron/main.cjs && node --check electron/preload.cjs && node --check electron/catalog-service.cjs && node --check electron/character-service.cjs && npm run build && npm run clean:dist && npm run audit:open-source",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "dev": "vite",
     "build": "npm run clean && tsc && vite build",
     "preview": "vite preview",
@@ -40,7 +42,8 @@
     "electron": "^39.2.7",
     "electron-builder": "^26.0.12",
     "typescript": "^6.0.3",
-    "vite": "^8.0.16"
+    "vite": "^8.0.16",
+    "vitest": "^4.1.8"
   },
   "build": {
     "appId": "local.acgplan.app",

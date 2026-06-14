@@ -4,6 +4,10 @@ export type CatalogAssetType = 'wallpaper' | 'collectionIcon';
 
 export type SortMode = 'updatedAt' | 'createdAt' | 'name' | 'sourceTitle';
 
+export type StorySortMode = 'updatedAt' | 'createdAt' | 'title';
+
+export type StoryBlockType = 'heading' | 'paragraph' | 'quote' | 'image';
+
 export type VoiceAsset = {
   id: string;
   label: string;
@@ -53,6 +57,93 @@ export type CatalogMetadata = {
   collections: CatalogCollection[];
 };
 
+export type StoryCategory = {
+  id: string;
+  name: string;
+  description: string;
+  tagRules: string[];
+};
+
+export type StoryCatalogMetadata = {
+  defaultCategoryId: string;
+  defaultSortMode: StorySortMode;
+  categories: StoryCategory[];
+};
+
+export type StoryBlock = {
+  id: string;
+  type: StoryBlockType;
+  text: string;
+  imagePath?: string;
+  imageUrl?: string;
+  imageFileName?: string;
+  caption?: string;
+};
+
+export type Story = {
+  id: string;
+  title: string;
+  subtitle: string;
+  summary: string;
+  categoryIds: string[];
+  tags: string[];
+  linkedCharacterIds: string[];
+  blocks: StoryBlock[];
+  coverImagePath?: string;
+  coverImageUrl?: string;
+  coverImageFileName?: string;
+  libraryDirectory?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type StoryBacklink = {
+  storyId: string;
+  storyTitle: string;
+  excerpt: string;
+};
+
+export type AppPreferences = {
+  soundMode: 'off' | 'soft' | 'full';
+  soundVolume: number;
+};
+
+export type BrokenWikiLink = {
+  storyId: string;
+  storyTitle: string;
+  label: string;
+  blockId?: string;
+  field: 'text' | 'caption';
+};
+
+export type LibraryHealthIssue = {
+  id: string;
+  severity: 'info' | 'warning';
+  kind:
+    | 'broken-wiki-link'
+    | 'orphan-character'
+    | 'uncategorized-story'
+    | 'empty-story-category'
+    | 'duplicate-story-category';
+  title: string;
+  detail: string;
+  characterId?: string;
+  storyId?: string;
+  label?: string;
+};
+
+export type LibraryHealthReport = {
+  generatedAt: string;
+  summary: {
+    characterCount: number;
+    storyCount: number;
+    issueCount: number;
+    warningCount: number;
+  };
+  brokenWikiLinks: BrokenWikiLink[];
+  issues: LibraryHealthIssue[];
+};
+
 export type Character = {
   id: string;
   name: string;
@@ -93,6 +184,7 @@ export type Character = {
 export type LibraryInfo = {
   libraryRoot: string;
   charactersRoot: string;
+  storiesRoot: string;
 };
 
 export type LibrarySettings = {
@@ -116,6 +208,13 @@ export type AcgplanDesktopApi = {
   saveCatalog: (catalog: CatalogMetadata) => Promise<CatalogMetadata>;
   importCatalogAsset: (assetType: CatalogAssetType, collectionId?: string) => Promise<CatalogMetadata>;
   saveCollectionIcon: (collectionId: string, imageDataUrl: string, fileName: string) => Promise<CatalogMetadata>;
+  getStoryCatalog: () => Promise<StoryCatalogMetadata>;
+  saveStoryCatalog: (catalog: StoryCatalogMetadata) => Promise<StoryCatalogMetadata>;
+  getStories: () => Promise<Story[]>;
+  saveStory: (story: Story) => Promise<Story>;
+  deleteStory: (story: Story) => Promise<Story[]>;
+  importStoryImage: (story: Story, blockId?: string) => Promise<Story>;
+  removeStoryImage: (story: Story, assetPath: string) => Promise<Story>;
   getLibraryCharacters: () => Promise<Character[]>;
   saveCharacter: (character: Character) => Promise<Character>;
   deleteCharacter: (character: Character) => Promise<Character[]>;

@@ -29,13 +29,18 @@ function createLibraryContext(app) {
     const explicitRoot = process.env.ACGPLAN_WORKSPACE_ROOT;
     if (hasLocalDataRoot(explicitRoot)) return explicitRoot;
 
-    const releaseParentRoot = path.basename(packageRoot).toLowerCase() === 'release'
+    const unpackedReleaseRoot = path.basename(packageRoot).toLowerCase() === 'win-unpacked'
       ? path.dirname(packageRoot)
       : '';
+    const releaseRoot = path.basename(packageRoot).toLowerCase() === 'release' ? packageRoot : unpackedReleaseRoot;
+    const releaseParentRoot = releaseRoot && path.basename(releaseRoot).toLowerCase() === 'release'
+      ? path.dirname(releaseRoot)
+      : '';
     if (hasLocalDataRoot(releaseParentRoot)) return releaseParentRoot;
+    if (hasLocalDataRoot(releaseRoot)) return releaseRoot;
     if (hasLocalDataRoot(packageRoot)) return packageRoot;
 
-    return packageRoot;
+    return releaseRoot || packageRoot;
   }
 
   function readJsonFile(filePath, fallback) {
@@ -83,8 +88,16 @@ function createLibraryContext(app) {
     return path.join(getLibraryRoot(), 'characters');
   }
 
+  function getStoriesRoot() {
+    return path.join(getLibraryRoot(), 'stories');
+  }
+
   function getCatalogPath() {
     return path.join(getLibraryRoot(), 'catalog.json');
+  }
+
+  function getStoryCatalogPath() {
+    return path.join(getLibraryRoot(), 'story-catalog.json');
   }
 
   function getSettingsPayload() {
@@ -97,8 +110,13 @@ function createLibraryContext(app) {
     );
   }
 
+  function ensureStoryDirectories(storyDirectory) {
+    ['images'].forEach((folder) => ensureDirectory(path.join(storyDirectory, folder)));
+  }
+
   function ensureLibraryStructure() {
     ensureDirectory(getCharactersRoot());
+    ensureDirectory(getStoriesRoot());
     ensureDirectory(path.join(getLibraryRoot(), 'catalog-assets', 'wallpapers'));
     ensureDirectory(path.join(getLibraryRoot(), 'catalog-assets', 'icons'));
   }
@@ -153,9 +171,12 @@ function createLibraryContext(app) {
     writeSettings,
     getLibraryRoot,
     getCharactersRoot,
+    getStoriesRoot,
     getCatalogPath,
+    getStoryCatalogPath,
     getSettingsPayload,
     ensureCharacterDirectories,
+    ensureStoryDirectories,
     ensureLibraryStructure,
     toAssetUrl,
     createUniqueTargetPath,

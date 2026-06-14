@@ -1,0 +1,224 @@
+.story-card-meta {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  grid-column: 2;
+  align-self: end;
+  min-width: 0;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+}
+
+.warning-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border: 1px solid rgba(255, 180, 169, 0.46);
+  border-radius: 999px;
+  background: rgba(255, 120, 100, 0.14);
+  color: #ffd1c8;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 2px 8px;
+}
+
+.library-health-panel {
+  display: grid;
+  gap: 14px;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 112px;
+  max-height: min(46dvh, 430px);
+  overflow: auto;
+  resize: vertical;
+  padding: 16px 16px 22px;
+  border-radius: 8px;
+  scrollbar-gutter: stable;
+}
+
+.library-health-panel header,
+.health-stats {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.library-health-panel header p,
+.library-health-panel header h2 {
+  margin: 0;
+}
+
+.library-health-panel header p {
+  color: var(--color-gold);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.health-stats span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  color: var(--color-muted);
+  padding: 2px 9px;
+}
+
+.health-summary-group {
+  display: grid;
+  gap: 8px;
+}
+
+.health-summary-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  border: 1px solid rgba(90, 200, 184, 0.26);
+  border-radius: 8px;
+  background: rgba(90, 200, 184, 0.08);
+  color: var(--color-muted);
+  text-align: left;
+  line-height: 1.5;
+  padding: 12px 14px;
+}
+
+.health-summary-toggle:hover {
+  border-color: rgba(90, 200, 184, 0.46);
+  background: rgba(90, 200, 184, 0.13);
+  transform: none;
+}
+
+.health-summary-toggle strong,
+.health-summary-toggle small {
+  display: block;
+}
+
+.health-summary-toggle strong {
+  color: rgba(248, 240, 225, 0.92);
+}
+
+.health-summary-toggle small {
+  color: var(--color-muted);
+  font-size: 0.78rem;
+}
+
+.health-summary-action {
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 218, 146, 0.32);
+  border-radius: 8px;
+  color: var(--color-gold);
+  font-size: 0.82rem;
+  font-weight: 900;
+  padding: 5px 10px;
+}
+
+.health-collapsible-panel {
+  display: grid;
+  gap: 10px;
+  border: 1px solid rgba(90, 200, 184, 0.22);
+  border-radius: 8px;
+  background: rgba(18, 16, 24, 0.42);
+  padding: 12px;
+}
+
+.health-collapsible-panel p,
+.health-collapsible-panel small {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.health-orphan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.health-orphan-grid button {
+  min-width: 0;
+  justify-content: start;
+  overflow: hidden;
+  border-color: rgba(90, 200, 184, 0.36);
+  border-radius: 8px;
+  background: rgba(90, 200, 184, 0.1);
+  color: #dffbf7;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.health-issue-list {
+  display: grid;
+  gap: 8px;
+}
+
+.health-issue {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(255, 236, 190, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 10px;
+}
+
+.health-issue strong,
+.health-issue small {
+  display: block;
+  min-width: 0;
+}
+
+.health-issue small {
+  color: var(--color-muted);
+  line-height: 1.45;
+}
+
+.library-health-resize-handle {
+  position: sticky;
+  bottom: 0;
+  justify-self: center;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  min-height: 14px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  cursor: ns-resize;
+  padding: 2px;
+}
+
+.library-health-resize-handle span {
+  display: block;
+  width: 46px;
+  height: 4px;
+  border-radius: 8px;
+  background: rgba(255, 236, 190, 0.28);
+}
+
+.library-health-resize-handle:hover,
+.library-health-resize-handle:focus-visible {
+  background: rgba(255, 236, 190, 0.08);
+  transform: none;
+}
+
+.library-health-resize-handle:hover span,
+.library-health-resize-handle:focus-visible span {
+  background: rgba(215, 181, 109, 0.72);
+}
+
+.story-updated-at {
+  display: block;
+  margin-top: 8px;
+  color: var(--color-muted);
+}
+
+.story-link-health {
+  display: grid;
+  gap: 8px;
+}

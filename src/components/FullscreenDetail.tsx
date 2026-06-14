@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { AssetType, CatalogMetadata, Character, CropImageSelection, VoiceAsset } from '../types';
+import type { AssetType, CatalogMetadata, Character, CropImageSelection, StoryBacklink } from '../types';
 import type { LibraryClient } from '../platform/libraryClient';
 import { normalizeCharacter } from '../storage/characterStore';
+import { AttachmentSection } from './detail/AttachmentSection';
+import { ImageAssetGrid } from './detail/ImageAssetGrid';
+import { EditableProfile, ReadonlyProfile } from './detail/ProfilePanels';
+import { StoryBacklinksPanel } from './detail/StoryBacklinksPanel';
+import { VoiceSection } from './detail/VoiceSection';
+import type { ImageAsset } from './detail/detailUtils';
+import { fileName, imageAssets } from './detail/detailUtils';
 import { ImageCropper } from './ImageCropper';
 import { ImageLightbox } from './ImageLightbox';
 
@@ -12,16 +19,13 @@ type FullscreenDetailProps = {
   character: Character;
   mode: DetailMode;
   libraryClient: LibraryClient | null | undefined;
+  storyBacklinks?: StoryBacklink[];
   onModeChange: (mode: DetailMode) => void;
+  onOpenStory?: (storyId: string) => void;
   onSave: (character: Character) => void | Promise<void>;
   onCancelEdit: (character: Character) => void;
   onClose: () => void;
   onDelete: () => void;
-};
-
-type ImageAsset = {
-  path: string;
-  url?: string;
 };
 
 export function FullscreenDetail({
@@ -29,7 +33,9 @@ export function FullscreenDetail({
   character,
   mode,
   libraryClient,
+  storyBacklinks = [],
   onModeChange,
+  onOpenStory,
   onSave,
   onCancelEdit,
   onClose,
@@ -204,6 +210,8 @@ export function FullscreenDetail({
             <ReadonlyProfile character={visibleCharacter} />
           )}
 
+          <StoryBacklinksPanel backlinks={storyBacklinks} onOpenStory={onOpenStory} />
+
           <section className="glass-panel">
             <h2>头像</h2>
             <div className="asset-import-grid">
@@ -284,272 +292,4 @@ export function FullscreenDetail({
       ) : null}
     </section>
   );
-}
-
-function EditableProfile({
-  catalog,
-  draft,
-  tagInput,
-  onDraftChange,
-  onTagInputChange,
-  onAddTag,
-  onRemoveTag,
-  onToggleCollection,
-}: {
-  catalog: CatalogMetadata;
-  draft: Character;
-  tagInput: string;
-  onDraftChange: (patch: Partial<Character>) => void;
-  onTagInputChange: (value: string) => void;
-  onAddTag: (value: string) => void;
-  onRemoveTag: (tag: string) => void;
-  onToggleCollection: (collectionId: string) => void;
-}) {
-  return (
-    <>
-      <section className="glass-panel editor-two-column">
-        <label>
-          来源
-          <input value={draft.sourceTitle} onChange={(event) => onDraftChange({ sourceTitle: event.target.value })} placeholder="游戏、动画或收藏来源" />
-        </label>
-        <label>
-          别名
-          <input value={draft.aliases.join(', ')} onChange={(event) => onDraftChange({ aliases: event.target.value.split(',') })} placeholder="用英文逗号分隔" />
-        </label>
-      </section>
-
-      <section className="glass-panel">
-        <h2>分类</h2>
-        <div className="collection-checks">
-          {catalog.collections
-            .filter((collection) => collection.id !== 'all')
-            .map((collection) => (
-              <label key={collection.id}>
-                <input
-                  type="checkbox"
-                  checked={draft.collectionIds.includes(collection.id)}
-                  onChange={() => onToggleCollection(collection.id)}
-                />
-                <span>{collection.name}</span>
-              </label>
-            ))}
-        </div>
-      </section>
-
-      <section className="glass-panel">
-        <h2>标签</h2>
-        <div className="tag-composer">
-          <input
-            value={tagInput}
-            onChange={(event) => onTagInputChange(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                event.preventDefault();
-                onAddTag(tagInput);
-              }
-            }}
-            placeholder="输入标签后按 Enter"
-          />
-          <button type="button" onClick={() => onAddTag(tagInput)}>添加</button>
-        </div>
-        <div className="tag-row editable-tags">
-          {draft.tags.length ? (
-            draft.tags.map((tag) => (
-              <span className="tag-chip" key={tag}>
-                {tag}
-                <button type="button" aria-label={`删除标签 ${tag}`} onClick={() => onRemoveTag(tag)}>x</button>
-              </span>
-            ))
-          ) : (
-            <span>暂无标签</span>
-          )}
-        </div>
-      </section>
-
-      <section className="glass-panel long-text-editor">
-        <h2>人物介绍</h2>
-        <textarea value={draft.description} onChange={(event) => onDraftChange({ description: event.target.value })} placeholder="用于详情页展示的人物介绍" />
-      </section>
-
-      <section className="glass-panel long-text-editor">
-        <h2>备注</h2>
-        <textarea value={draft.notes} onChange={(event) => onDraftChange({ notes: event.target.value })} placeholder="个人备注、来源补充、维护记录" />
-      </section>
-    </>
-  );
-}
-
-function ReadonlyProfile({ character }: { character: Character }) {
-  return (
-    <>
-      <section className="glass-panel">
-        <h2>人物介绍</h2>
-        <FormattedText value={character.description} fallback="暂无介绍。" />
-      </section>
-      <section className="glass-panel">
-        <h2>备注</h2>
-        <FormattedText value={character.notes} fallback="暂无备注。" />
-      </section>
-      <section className="glass-panel">
-        <h2>标签</h2>
-        <div className="tag-row">
-          {character.tags?.length ? character.tags.map((tag) => <span key={tag}>{tag}</span>) : <span>暂无标签</span>}
-        </div>
-      </section>
-    </>
-  );
-}
-
-function FormattedText({ value, fallback }: { value: string; fallback: string }) {
-  const blocks = value
-    .trim()
-    .split(/\n{2,}/)
-    .map((block) => block.trim())
-    .filter(Boolean);
-
-  if (!blocks.length) return <p>{fallback}</p>;
-
-  return (
-    <div className="formatted-text">
-      {blocks.map((block, index) => (
-        <p key={`${index}-${block.slice(0, 16)}`}>{block}</p>
-      ))}
-    </div>
-  );
-}
-
-function ImageAssetGrid({
-  assets,
-  activePath,
-  emptyText,
-  isEditing,
-  activeLabel,
-  setLabel,
-  onPreview,
-  onSetActive,
-  onRemove,
-}: {
-  assets: ImageAsset[];
-  activePath?: string;
-  emptyText: string;
-  isEditing: boolean;
-  activeLabel: string;
-  setLabel: string;
-  onPreview: (imageUrl?: string) => void;
-  onSetActive: (asset: ImageAsset) => void;
-  onRemove: (assetPath: string) => void;
-}) {
-  if (!assets.length) return <p>{emptyText}</p>;
-
-  return (
-    <div className="portrait-gallery editable-gallery">
-      {assets.map((asset) => (
-        <article className={asset.path === activePath ? 'asset-tile active' : 'asset-tile'} key={asset.path}>
-          <button type="button" onClick={() => onPreview(asset.url)}>
-            {asset.url ? <img src={asset.url} alt={fileName(asset.path)} /> : <span>{fileName(asset.path)}</span>}
-          </button>
-          <div className="asset-tile-actions">
-            {asset.path === activePath ? <small>{activeLabel}</small> : null}
-            {isEditing && asset.path !== activePath ? <button type="button" onClick={() => onSetActive(asset)}>{setLabel}</button> : null}
-            {isEditing ? <button className="danger-button" type="button" onClick={() => onRemove(asset.path)}>删除</button> : null}
-          </div>
-        </article>
-      ))}
-    </div>
-  );
-}
-
-function VoiceSection({
-  voices,
-  isEditing,
-  canImport,
-  onImport,
-  onUpdateVoice,
-  onRemove,
-}: {
-  voices: VoiceAsset[];
-  isEditing: boolean;
-  canImport: boolean;
-  onImport: () => void;
-  onUpdateVoice: (voiceId: string, field: 'label' | 'line', value: string) => void;
-  onRemove: (assetPath: string) => void;
-}) {
-  return (
-    <section className="glass-panel">
-      <h2>语音</h2>
-      {isEditing ? <button type="button" disabled={!canImport} onClick={onImport}>导入语音</button> : null}
-      <div className="voice-panel-list">
-        {voices.length ? (
-          voices.map((voice) => (
-            <article key={voice.id}>
-              {isEditing ? (
-                <div className="voice-editor-row">
-                  <input value={voice.label} onChange={(event) => onUpdateVoice(voice.id, 'label', event.target.value)} placeholder="语音名称" />
-                  <input value={voice.line || ''} onChange={(event) => onUpdateVoice(voice.id, 'line', event.target.value)} placeholder="台词文本" />
-                  <button className="danger-button" type="button" onClick={() => onRemove(voice.filePath)}>删除</button>
-                </div>
-              ) : (
-                <>
-                  <strong>{voice.label}</strong>
-                  {voice.line || voice.subtitle ? <p>{voice.line || voice.subtitle}</p> : null}
-                  <audio controls src={voice.fileUrl} />
-                </>
-              )}
-            </article>
-          ))
-        ) : (
-          <p>暂无语音。</p>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function AttachmentSection({
-  character,
-  isEditing,
-  canImport,
-  onImport,
-  onRemove,
-}: {
-  character: Character;
-  isEditing: boolean;
-  canImport: boolean;
-  onImport: (assetType: AssetType) => void;
-  onRemove: (assetType: AssetType, assetPath: string) => void;
-}) {
-  return (
-    <section className="glass-panel">
-      <h2>附件</h2>
-      {isEditing ? (
-        <div className="asset-import-grid">
-          <button type="button" disabled={!canImport} onClick={() => onImport('model')}>导入模型附件</button>
-          <button type="button" disabled={!canImport} onClick={() => onImport('attachment')}>导入其他附件</button>
-        </div>
-      ) : null}
-      <div className="asset-list">
-        {(character.modelPaths?.length ? character.modelPaths : character.modelPath ? [character.modelPath] : []).map((modelPath) => (
-          <article key={modelPath}>
-            <strong>模型附件：{fileName(modelPath)}</strong>
-            {isEditing ? <button className="danger-button" type="button" onClick={() => onRemove('model', modelPath)}>删除</button> : null}
-          </article>
-        ))}
-        {character.attachmentPaths?.map((attachmentPath) => (
-          <article key={attachmentPath}>
-            <strong>{fileName(attachmentPath)}</strong>
-            {isEditing ? <button className="danger-button" type="button" onClick={() => onRemove('attachment', attachmentPath)}>删除</button> : null}
-          </article>
-        ))}
-        {!character.modelPath && !character.modelPaths?.length && !character.attachmentPaths?.length ? <p>暂无附件。</p> : null}
-      </div>
-    </section>
-  );
-}
-
-function imageAssets(paths: string[] | undefined, urls: string[] | undefined): ImageAsset[] {
-  return (paths || []).map((path, index) => ({ path, url: urls?.[index] })).filter((asset) => asset.path);
-}
-
-function fileName(filePath: string): string {
-  return filePath.split(/[\\/]/).pop() || filePath;
 }

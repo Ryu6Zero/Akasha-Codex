@@ -1,13 +1,27 @@
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
 import { FilePicker, type PickedFile } from '@capawesome/capacitor-file-picker';
 import { defaultCatalog } from '../data/defaultCatalog';
+import { defaultStoryCatalog } from '../data/defaultStoryCatalog';
 import { normalizeCharacter } from '../storage/characterStore';
-import type { AssetType, CatalogAssetType, CatalogMetadata, Character, CropImageSelection, LibrarySettings } from '../types';
+import { applyStoryImage, normalizeStory, normalizeStoryCatalog, stripStoryUrls } from '../storage/storyStore';
+import { assertManagedLibraryPath, isManagedLibraryPath, normalizeLibraryPath } from './libraryPathGuard';
+import type {
+  AssetType,
+  CatalogAssetType,
+  CatalogMetadata,
+  Character,
+  CropImageSelection,
+  LibrarySettings,
+  Story,
+  StoryCatalogMetadata,
+} from '../types';
 import type { LibraryClient } from './libraryClient';
 
 const ROOT = 'library';
 const CHARACTERS_ROOT = `${ROOT}/characters`;
+const STORIES_ROOT = `${ROOT}/stories`;
 const CATALOG_PATH = `${ROOT}/catalog.json`;
+const STORY_CATALOG_PATH = `${ROOT}/story-catalog.json`;
 
 const IMAGE_TYPES = ['image/*'];
 const VOICE_TYPES = ['audio/*'];
@@ -31,6 +45,13 @@ export function createMobileLibraryClient(): LibraryClient {
     saveCatalog,
     importCatalogAsset,
     saveCollectionIcon,
+    getStoryCatalog,
+    saveStoryCatalog,
+    getStories,
+    saveStory,
+    deleteStory,
+    importStoryImage,
+    removeStoryImage,
     getLibraryCharacters,
     saveCharacter,
     deleteCharacter,
@@ -46,7 +67,7 @@ export function createMobileLibraryClient(): LibraryClient {
 
 async function getLibraryInfo() {
   await ensureLibraryStructure();
-  return { libraryRoot: ROOT, charactersRoot: CHARACTERS_ROOT };
+  return { libraryRoot: ROOT, charactersRoot: CHARACTERS_ROOT, storiesRoot: STORIES_ROOT };
 }
 
 async function getSettings(): Promise<LibrarySettings> {
@@ -100,6 +121,83 @@ async function saveCollectionIcon(collectionId: string, imageDataUrl: string, fi
   return saveCatalog(catalog);
 }
 
+async function getStoryCatalog(): Promise<StoryCatalogMetadata> {
+  await ensureLibraryStructure();
+  const catalog = normalizeStoryCatalog(await readJson<StoryCatalogMetadata>(STORY_CATALOG_PATH, defaultStoryCatalog));
+  await writeJson(STORY_CATALOG_PATH, catalog);
+  return catalog;
+}
+
+async function saveStoryCatalog(catalog: StoryCatalogMetadata): Promise<StoryCatalogMetadata> {
+  await ensureLibraryStructure();
+  const normalized = normalizeStoryCatalog(catalog);
+  await writeJson(STORY_CATALOG_PATH, normalized);
+  return normalized;
+}
+
+async function getStories(): Promise<Story[]> {
+  await ensureLibraryStructure();
+  const entries = await safeReadDir(STORIES_ROOT);
+  const stories = await Promise.all(
+    entries.map(async (entryName) => {
+      const directory = `${STORIES_ROOT}/${entryName}`;
+      const story = await readJson<Story | null>(`${directory}/story.json`, null);
+      return story ? toStoryPayload(directory, { ...story, libraryDirectory: directory }) : null;
+    }),
+  );
+
+  return stories
+    .filter((story): story is Story => Boolean(story))
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+}
+
+async function saveStory(story: Story): Promise<Story> {
+  await ensureLibraryStructure();
+  const normalized = normalizeStory(story);
+  const directory = managedDirectoryOrDefault(normalized.libraryDirectory, `${STORIES_ROOT}/${normalized.id}`);
+  await ensureStoryDirectories(directory);
+
+  const persisted = stripStoryUrls({
+    ...normalized,
+    libraryDirectory: directory,
+    updatedAt: new Date().toISOString(),
+  });
+  await writeJson(`${directory}/story.json`, persisted);
+  return toStoryPayload(directory, persisted);
+}
+
+async function deleteStory(story: Story): Promise<Story[]> {
+  const directory = story.libraryDirectory || `${STORIES_ROOT}/${story.id}`;
+  await safeRemoveDirectory(directory);
+  return getStories();
+}
+
+async function importStoryImage(story: Story, blockId?: string): Promise<Story> {
+  const picked = await pickStoredFiles(IMAGE_TYPES, false);
+  if (!picked.length) return story;
+
+  const normalized = normalizeStory(story);
+  const directory = managedDirectoryOrDefault(normalized.libraryDirectory, `${STORIES_ROOT}/${normalized.id}`);
+  await ensureStoryDirectories(directory);
+  const imagePath = await writeUniqueBase64(`${directory}/images`, picked[0], 'story-image');
+  const nextStory = applyStoryImage(normalized, imagePath, blockId);
+  return saveStory({ ...nextStory, libraryDirectory: directory });
+}
+
+async function removeStoryImage(story: Story, assetPath: string): Promise<Story> {
+  const normalized = normalizeStory(story);
+  await safeDeleteFile(assetPath);
+  normalized.blocks = normalized.blocks.map((block) =>
+    block.imagePath === assetPath ? { ...block, imagePath: undefined, imageFileName: undefined, imageUrl: undefined } : block,
+  );
+  if (normalized.coverImagePath === assetPath) {
+    const nextCoverBlock = normalized.blocks.find((block) => block.imagePath);
+    normalized.coverImagePath = nextCoverBlock?.imagePath;
+    normalized.coverImageFileName = nextCoverBlock?.imageFileName;
+  }
+  return saveStory(normalized);
+}
+
 async function getLibraryCharacters(): Promise<Character[]> {
   await ensureLibraryStructure();
   const entries = await safeReadDir(CHARACTERS_ROOT);
@@ -119,9 +217,7 @@ async function getLibraryCharacters(): Promise<Character[]> {
 async function saveCharacter(character: Character): Promise<Character> {
   await ensureLibraryStructure();
   const normalized = normalizeCharacter(character);
-  const directory = normalized.libraryDirectory?.startsWith(CHARACTERS_ROOT)
-    ? normalized.libraryDirectory
-    : `${CHARACTERS_ROOT}/${normalized.id}`;
+  const directory = managedDirectoryOrDefault(normalized.libraryDirectory, `${CHARACTERS_ROOT}/${normalized.id}`);
   await ensureCharacterDirectories(directory);
 
   const persisted = stripCharacterUrls({
@@ -145,7 +241,7 @@ async function importAsset(character: Character, assetType: AssetType): Promise<
   if (!files.length) return character;
 
   const normalized = normalizeCharacter(character);
-  const directory = normalized.libraryDirectory || `${CHARACTERS_ROOT}/${normalized.id}`;
+  const directory = managedDirectoryOrDefault(normalized.libraryDirectory, `${CHARACTERS_ROOT}/${normalized.id}`);
   await ensureCharacterDirectories(directory);
   const folder = assetFolder(assetType);
   const savedPaths: string[] = [];
@@ -194,7 +290,7 @@ async function selectImageForCrop(): Promise<CropImageSelection | null> {
 
 async function saveCroppedAvatar(character: Character, imageDataUrl: string, fileName: string): Promise<Character> {
   const normalized = normalizeCharacter(character);
-  const directory = normalized.libraryDirectory || `${CHARACTERS_ROOT}/${normalized.id}`;
+  const directory = managedDirectoryOrDefault(normalized.libraryDirectory, `${CHARACTERS_ROOT}/${normalized.id}`);
   await ensureCharacterDirectories(directory);
   const parsed = parseDataUrl(imageDataUrl, fileName);
   const targetPath = await writeUniqueBase64(`${directory}/avatar`, parsed, 'avatar');
@@ -294,6 +390,23 @@ async function toCharacterPayload(directory: string, character: Character): Prom
   };
 }
 
+async function toStoryPayload(directory: string, story: Story): Promise<Story> {
+  const normalized = normalizeStory(story);
+  const blocks = await Promise.all(
+    normalized.blocks.map(async (block) => ({
+      ...block,
+      imageUrl: await toAssetUrl(block.imagePath),
+    })),
+  );
+
+  return {
+    ...normalized,
+    libraryDirectory: directory,
+    coverImageUrl: await toAssetUrl(normalized.coverImagePath),
+    blocks,
+  };
+}
+
 async function pickFilesForAsset(assetType: AssetType): Promise<StoredFile[]> {
   if (assetType === 'avatar') return pickStoredFiles(IMAGE_TYPES, false);
   if (assetType === 'portrait') return pickStoredFiles(IMAGE_TYPES, true);
@@ -322,6 +435,7 @@ async function ensureLibraryStructure(): Promise<void> {
   await Promise.all([
     ensureDirectory(ROOT),
     ensureDirectory(CHARACTERS_ROOT),
+    ensureDirectory(STORIES_ROOT),
     ensureDirectory(`${ROOT}/catalog-assets/wallpapers`),
     ensureDirectory(`${ROOT}/catalog-assets/icons`),
   ]);
@@ -329,6 +443,10 @@ async function ensureLibraryStructure(): Promise<void> {
 
 async function ensureCharacterDirectories(directory: string): Promise<void> {
   await Promise.all(['avatar', 'portraits', 'voices', 'attachments', 'models'].map((folder) => ensureDirectory(`${directory}/${folder}`)));
+}
+
+async function ensureStoryDirectories(directory: string): Promise<void> {
+  await ensureDirectory(`${directory}/images`);
 }
 
 async function ensureDirectory(path: string): Promise<void> {
@@ -405,6 +523,7 @@ async function exists(path: string): Promise<boolean> {
 }
 
 async function safeDeleteFile(path: string): Promise<void> {
+  assertManagedLibraryPath(path, 'Mobile library delete file');
   try {
     await Filesystem.deleteFile({ path, directory: Directory.Data });
   } catch {
@@ -413,11 +532,16 @@ async function safeDeleteFile(path: string): Promise<void> {
 }
 
 async function safeRemoveDirectory(path: string): Promise<void> {
+  assertManagedLibraryPath(path, 'Mobile library remove directory');
   try {
     await Filesystem.rmdir({ path, directory: Directory.Data, recursive: true });
   } catch {
     // Missing directories are already removed from the user's perspective.
   }
+}
+
+function managedDirectoryOrDefault(directory: string | undefined, fallback: string): string {
+  return directory && isManagedLibraryPath(directory) ? normalizeLibraryPath(directory) : fallback;
 }
 
 function normalizeCatalog(catalog: CatalogMetadata): CatalogMetadata {
