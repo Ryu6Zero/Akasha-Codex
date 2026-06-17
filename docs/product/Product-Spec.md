@@ -29,7 +29,9 @@ The target user collects character images, portraits, voice files, tags, source 
 - No online asset scraping.
 - No automatic use of copyrighted game assets.
 - No 3D model workbench, animation editor, rigging, pose editor, or PMX preview surface.
+- No bundled Live2D/Cubism runtime or skeletal animation preview surface in the main catalog.
 - No account system or remote sync.
+- No cloud database, remote indexing service, or account-bound search backend for large local libraries.
 
 ## Functional Requirements
 
@@ -50,6 +52,53 @@ The target user collects character images, portraits, voice files, tags, source 
 - The inline editor can remove avatar, portrait, voice, model, and generic attachment references from the local library entry.
 - The app copies imported assets into the active library and never references arbitrary source paths as the canonical asset.
 - The app stores settings in `config/acgplan-settings.json`.
+
+## Local Test Import Requirements
+
+External game/wiki import scripts are local test-data utilities, not shipped online scraping features. Imported third-party assets must stay in the local `library/` and out of public builds.
+
+- Each imported work title must have its own catalog collection when it is used as a test source, including `二重螺旋`, `洛克人 Zero/ZX/ZXA`, and `洛克人 X DiVE`.
+- `DNF`, `鸣潮`, and `胜利女神：NIKKE` test imports must store one or more local portrait images plus a local character introduction/description for every imported entry when the source exposes them.
+- Test import scripts must set `collectionIds[]` to the matching work collection instead of relying only on broad tags.
+- Character portrait imports should prefer full-body official/key-art style images. Half-body close-ups, thumbnails, square icons, and UI item icons are acceptable only as explicit fallbacks and must be reported as such.
+- NIKKE `l2d` raw atlas PNG files must not be imported as portraits because they contain separated body parts.
+- NIKKE importer must keep only safe static avatars/profile metadata and report skipped raw atlas assets.
+- `战双帕弥什` weapon图鉴 is out of scope for the current test data. 战双意识 imports should include only entries where the source page exposes all three full-body awareness portraits.
+- `深空之眼` weapon/钥从 imports should use detail-page large portrait art, not list-page avatar icons.
+- `洛克人` test imports should keep the older Zero/ZX/ZXA wiki category images and also import `Mega Man X DiVE` / `Rockman X DiVE` character portrait sources. Same-name Zero/ZX/ZXA portraits should be merged into the existing X DiVE entry as additional portraits instead of creating duplicate same-name entries.
+
+## Performance And Scale Requirements
+
+The local encyclopedia must stay usable when the user's library grows from test data into a real collection. The scale target is:
+
+- At least `10,000` character entries.
+- At least `1,000` story entries.
+- At least `100,000` locally managed asset files across avatars, portraits, voices, models, attachments, story images, wallpapers, and icons.
+
+Catalog browsing requirements:
+
+- The catalog grid must not mount every matching character card at once. It must render only the visible range plus a small overscan buffer.
+- Typing in catalog search must keep the input responsive while search results update in the background.
+- Search, tag filtering, collection filtering, and sorting must run against precomputed character search/index metadata instead of rebuilding searchable text for every character on every keystroke.
+- Collection and tag counts must be derived in one indexed pass over the library data instead of scanning the full character array once per collection.
+- Character list rows/cards must use lightweight summary data. Full character detail payloads and complete asset lists should be loaded or expanded only when the user opens preview/detail/edit surfaces.
+- Catalog card images should load lazily and should prefer thumbnails or the smallest available preview asset when a platform can provide one.
+- Collection selection must remain reachable when the collection list exceeds one screen. Mouse-wheel scrolling on the collection selection page is required; pagination may be added later if the list becomes too dense.
+- Character cards must expose a right-click context menu with a quick delete action that reuses the existing delete confirmation flow.
+
+Knowledge-base requirements:
+
+- Story wiki-link lookup must use a precomputed label index keyed by character id, name, and aliases.
+- Story backlinks must be derived through a reusable `characterId -> backlinks` index instead of recomputing all story links for every character render.
+- Library health checks must avoid `characters x stories x labels` scans during normal screen render. Expensive checks should run from cached indexes or an explicit refresh path.
+
+Performance acceptance targets:
+
+- With `10,000` characters and representative tags, collections, descriptions, and notes, changing catalog search text, tag filter, collection filter, or sort mode should present updated visible results within `200ms` on a typical desktop development machine.
+- The catalog input should remain editable without visible keystroke lag while filtering `10,000` characters.
+- The catalog grid should keep mounted character card DOM nodes bounded by viewport size and overscan, not by total match count.
+- Opening a character preview/detail should not require reloading or recomputing the entire character library.
+- Mobile runtime must not eagerly convert every library asset into base64 data URLs when loading the character list.
 
 ## Data Structure
 
@@ -99,6 +148,8 @@ Legacy `voicePaths[]` and model fields remain readable.
 - Image lightbox and voice playback work for local assets.
 - Removing a character or asset persists to disk.
 - Three.js preview dependencies are removed from runtime dependencies.
+- A generated or fixture-backed `10,000` character performance check proves catalog filtering, sorting, collection counts, and visible-grid rendering stay within the scale targets.
+- Story backlinks and library health checks use indexed lookup paths and do not recompute every story link for every character during normal screen render.
 
 ## Knowledge Base Expansion
 

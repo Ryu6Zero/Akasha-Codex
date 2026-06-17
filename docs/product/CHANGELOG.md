@@ -1,5 +1,20 @@
 # 绯典阁 Changelog
 
+## 2026-06-16
+
+- Added collection selection page scrolling for libraries with many catalog categories.
+- Added right-click quick delete on catalog character cards, using the existing confirmation flow.
+- Removed the experimental NIKKE skeletal animation preview and runtime dependency after local testing showed poor presentation quality.
+- Stopped treating NIKKE raw atlas textures as portrait art in the import requirements; separated body-part atlases must be skipped and reported.
+
+## 2026-06-15
+
+- Added explicit large-library scale targets for `10,000` characters, `1,000` stories, and `100,000` local asset files.
+- Added catalog performance requirements for virtualized card rendering, responsive search input, indexed filtering/sorting/counts, lazy image loading, and summary-first character loading.
+- Added knowledge-base performance requirements for indexed wiki-link lookup, reusable story backlink indexes, and non-blocking library health checks.
+- Added performance acceptance criteria covering `10,000` character catalog checks and indexed story backlink behavior.
+- Added local test import rules requiring separate work-title collections, full-body portrait preference, 战双意识 three-portrait completeness, 深空之眼钥从 large art, retained 洛克人 Zero/ZX/ZXA imports, and additional 洛克人 X DiVE portrait sources with same-name merge behavior.
+
 ## 2026-06-12
 
 - Expanded the app into a local knowledge base with separate encyclopedia and story archive modules.
