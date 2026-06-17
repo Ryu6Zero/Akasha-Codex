@@ -24,6 +24,10 @@ const requiredIgnorePatterns = [
   'android/app/src/main/assets/public/',
   'docs/progress.md',
   'docs/project-memory.md',
+  '/Product-Spec.md',
+  '/Product-Spec-CHANGELOG.md',
+  '/Design-Brief.md',
+  '/DEV-PLAN.md',
 ];
 
 const ignoredPathPatterns = [
@@ -76,6 +80,7 @@ const warnings = [];
 
 checkGitignore();
 checkTrackedFiles();
+checkUntrackedLocalImportTools();
 checkRootResidues();
 scanPublicFiles();
 
@@ -166,6 +171,27 @@ function checkTrackedFiles() {
     if (forbiddenTrackedPatterns.some((pattern) => pattern.test(filePath))) {
       failures.push(`Forbidden tracked file detected: ${filePath}`);
     }
+  }
+}
+
+function checkUntrackedLocalImportTools() {
+  let untrackedFiles = [];
+  try {
+    untrackedFiles = execFileSync('git', ['ls-files', '--others', '--exclude-standard'], { cwd: root, encoding: 'utf8' })
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map(normalizePath);
+  } catch {
+    warnings.push('Unable to inspect untracked files; local import-tool boundary checks were skipped.');
+    return;
+  }
+
+  const importTools = untrackedFiles.filter((filePath) => /^tools\/import-.*\.cjs$/.test(filePath));
+  if (importTools.length) {
+    failures.push(
+      `Untracked local import tools are not ignored: ${importTools.slice(0, 8).join(', ')}. Keep private import scripts ignored or explicitly review their source/license boundary before tracking them.`,
+    );
   }
 }
 

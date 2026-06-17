@@ -15,13 +15,19 @@ android/app/build/
 android/build/
 tools/**/bin/
 tools/**/obj/
+/tools/import-*.cjs
+!/tools/import-arknights-full-portraits.cjs
 android/app/src/main/assets/public/
 docs/progress.md
 docs/project-memory.md
+/Product-Spec.md
+/Product-Spec-CHANGELOG.md
+/Design-Brief.md
+/DEV-PLAN.md
 
-# Feicai product manager skill group
+# Ryu6 product manager skill group
 AGENTS.md
 使用说明.md
 .agents/
 .codex/
-.feicai-backup/
+.ryu6-backup/

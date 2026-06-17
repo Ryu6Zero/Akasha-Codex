@@ -79,7 +79,7 @@ function checkVersionTag() {
 function checkGitHubCli() {
   const versionResult = run('gh', ['--version'], { optional: true });
   if (versionResult.status !== 0) {
-    failures.push('GitHub CLI "gh" is not installed or not on PATH.');
+    warnings.push('GitHub CLI "gh" is not installed or not on PATH; local GitHub release creation cannot be verified on this machine.');
     return;
   }
 
