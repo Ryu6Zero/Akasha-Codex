@@ -31,6 +31,8 @@ function registerIpcHandlers() {
   ipcMain.handle('stories:importImage', (_event, story, blockId) => storyService.importStoryImage(story, blockId));
   ipcMain.handle('stories:removeImage', (_event, story, assetPath) => storyService.removeStoryImage(story, assetPath));
   ipcMain.handle('library:getCharacters', () => characterService.loadLibraryCharacters());
+  ipcMain.handle('library:getCharacterSummaries', () => characterService.loadLibraryCharacterSummaries());
+  ipcMain.handle('library:getCharacter', (_event, characterId) => characterService.loadCharacter(characterId));
   ipcMain.handle('library:saveCharacter', (_event, character) => characterService.saveCharacterJson(character));
   ipcMain.handle('library:deleteCharacter', (_event, character) => characterService.deleteCharacter(character));
   ipcMain.handle('library:getInfo', () => ({

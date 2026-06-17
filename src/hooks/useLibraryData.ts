@@ -6,6 +6,13 @@ import { sampleStories } from '../data/sampleStories';
 import { createLibraryClient, type LibraryClient } from '../platform/libraryClient';
 import type { CatalogMetadata, Character, LibrarySettings, SortMode, Story, StoryCatalogMetadata } from '../types';
 
+function mergeCharacterDetail(characters: Character[], character: Character): Character[] {
+  const exists = characters.some((currentCharacter) => currentCharacter.id === character.id);
+  return exists
+    ? characters.map((currentCharacter) => (currentCharacter.id === character.id ? character : currentCharacter))
+    : [character, ...characters];
+}
+
 export function useLibraryData() {
   const [libraryClient, setLibraryClient] = useState<LibraryClient | null | undefined>(undefined);
   const [catalog, setCatalog] = useState<CatalogMetadata>(defaultCatalog);
@@ -47,7 +54,7 @@ export function useLibraryData() {
       libraryClient.getSettings(),
       libraryClient.getCatalog(),
       libraryClient.getStoryCatalog(),
-      libraryClient.getLibraryCharacters(),
+      libraryClient.getLibraryCharacterSummaries(),
       libraryClient.getStories(),
     ]);
 
@@ -67,6 +74,17 @@ export function useLibraryData() {
     });
     setIsLoading(false);
   }, [libraryClient]);
+
+  const loadCharacterDetail = useCallback(async (characterId: string): Promise<Character | null> => {
+    if (!libraryClient) {
+      return characters.find((character) => character.id === characterId) || null;
+    }
+
+    const character = await libraryClient.getCharacter(characterId);
+    if (!character) return null;
+    setCharacters((currentCharacters) => mergeCharacterDetail(currentCharacters, character));
+    return character;
+  }, [characters, libraryClient]);
 
   useEffect(() => {
     reloadLibrary();
@@ -92,5 +110,6 @@ export function useLibraryData() {
     setSortMode,
     isLoading,
     reloadLibrary,
+    loadCharacterDetail,
   };
 }

@@ -1,7 +1,43 @@
 import type { CatalogCollection, Character, SortMode } from '../types';
 
+export type CharacterCatalogIndexItem = {
+  character: Character;
+  searchableText: string;
+  collectionIds: Set<string>;
+  collectionRuleValues: Set<string>;
+  tags: Set<string>;
+};
+
+export function buildCharacterCatalogIndex(characters: Character[]): CharacterCatalogIndexItem[] {
+  return characters.map((character) => {
+    const tags = character.tags || [];
+    const collectionIds = character.collectionIds || [];
+
+    return {
+      character,
+      searchableText: [
+        character.name,
+        character.sourceTitle,
+        character.description,
+        character.notes,
+        ...(character.aliases || []),
+        ...tags,
+      ]
+        .join(' ')
+        .toLowerCase(),
+      collectionIds: new Set(collectionIds),
+      collectionRuleValues: new Set([...tags, ...collectionIds].map(normalizeRule)),
+      tags: new Set(tags),
+    };
+  });
+}
+
 export function getAvailableCharacterTags(characters: Character[]): string[] {
-  const tags = characters.flatMap((character) => character.tags || []).filter(Boolean);
+  return getAvailableCharacterTagsFromIndex(buildCharacterCatalogIndex(characters));
+}
+
+export function getAvailableCharacterTagsFromIndex(index: CharacterCatalogIndexItem[]): string[] {
+  const tags = index.flatMap((item) => item.character.tags || []).filter(Boolean);
   return [...new Set(tags)].sort((a, b) => a.localeCompare(b, 'zh-CN'));
 }
 
@@ -20,62 +56,81 @@ export function filterCharactersForCatalog({
   selectedTag: string;
   sortMode: SortMode;
 }): Character[] {
+  return filterCharacterIndexForCatalog({
+    index: buildCharacterCatalogIndex(characters),
+    collections,
+    searchQuery,
+    selectedCollectionId,
+    selectedTag,
+    sortMode,
+  });
+}
+
+export function filterCharacterIndexForCatalog({
+  index,
+  collections,
+  searchQuery,
+  selectedCollectionId,
+  selectedTag,
+  sortMode,
+}: {
+  index: CharacterCatalogIndexItem[];
+  collections: CatalogCollection[];
+  searchQuery: string;
+  selectedCollectionId: string;
+  selectedTag: string;
+  sortMode: SortMode;
+}): Character[] {
   const selectedCollection = collections.find((collection) => collection.id === selectedCollectionId);
   const normalizedQuery = searchQuery.trim().toLowerCase();
+  const selectedRules = (selectedCollection?.tagRules || []).map(normalizeRule).filter(Boolean);
 
-  return characters
-    .filter((character) => {
+  return index
+    .filter((item) => {
       const collectionMatch =
         selectedCollectionId === 'all' ||
-        character.collectionIds?.includes(selectedCollectionId) ||
-        selectedCollection?.tagRules.some((rule) => characterMatchesCollectionRule(character, rule));
-      const tagMatch = selectedTag ? character.tags?.includes(selectedTag) : true;
-      const queryMatch = normalizedQuery ? characterMatchesText(character, normalizedQuery) : true;
+        item.collectionIds.has(selectedCollectionId) ||
+        selectedRules.some((rule) => item.collectionRuleValues.has(rule));
+      const tagMatch = selectedTag ? item.tags.has(selectedTag) : true;
+      const queryMatch = normalizedQuery ? item.searchableText.includes(normalizedQuery) : true;
       return collectionMatch && tagMatch && queryMatch;
     })
-    .sort((a, b) => sortCharacters(a, b, sortMode));
+    .sort((a, b) => sortCharacters(a.character, b.character, sortMode))
+    .map((item) => item.character);
 }
 
 export function countCharactersByCollection(
   collections: CatalogCollection[],
   characters: Character[],
 ): Map<string, number> {
+  return countCharactersByCollectionFromIndex(collections, buildCharacterCatalogIndex(characters));
+}
+
+export function countCharactersByCollectionFromIndex(
+  collections: CatalogCollection[],
+  index: CharacterCatalogIndexItem[],
+): Map<string, number> {
   const counts = new Map<string, number>();
-  collections.forEach((collection) => {
-    const count =
-      collection.id === 'all'
-        ? characters.length
-        : characters.filter(
-            (character) =>
-              character.collectionIds?.includes(collection.id) ||
-              collection.tagRules.some((rule) => characterMatchesCollectionRule(character, rule)),
-          ).length;
-    counts.set(collection.id, count);
+  const matchers = collections.map((collection) => ({
+    collection,
+    rules: collection.tagRules.map(normalizeRule).filter(Boolean),
+  }));
+
+  collections.forEach((collection) => counts.set(collection.id, collection.id === 'all' ? index.length : 0));
+  index.forEach((item) => {
+    matchers.forEach(({ collection, rules }) => {
+      if (collection.id === 'all') return;
+      if (item.collectionIds.has(collection.id) || rules.some((rule) => item.collectionRuleValues.has(rule))) {
+        counts.set(collection.id, (counts.get(collection.id) || 0) + 1);
+      }
+    });
   });
+
   return counts;
 }
 
-function characterMatchesText(character: Character, normalizedQuery: string): boolean {
-  const searchableText = [
-    character.name,
-    character.sourceTitle,
-    character.description,
-    character.notes,
-    ...(character.aliases || []),
-    ...(character.tags || []),
-  ]
-    .join(' ')
-    .toLowerCase();
-
-  return searchableText.includes(normalizedQuery);
-}
-
-function characterMatchesCollectionRule(character: Character, rule: string): boolean {
-  const normalizedRule = rule.trim().toLowerCase();
-  if (!normalizedRule) return false;
-  return [...(character.tags || []), ...(character.collectionIds || [])].some((value) =>
-    value.toLowerCase() === normalizedRule,
-  );
+function normalizeRule(value: string): string {
+  return value.trim().toLowerCase();
 }
 
 function sortCharacters(a: Character, b: Character, sortMode: SortMode): number {

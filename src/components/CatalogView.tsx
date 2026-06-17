@@ -1,6 +1,7 @@
 import type { DragEvent } from 'react';
 import type { CatalogMetadata, Character, SortMode } from '../types';
 import { PreviewDrawer } from './PreviewDrawer';
+import { VirtualCharacterGrid } from './VirtualCharacterGrid';
 
 type CatalogViewProps = {
   catalog: CatalogMetadata;
@@ -139,34 +140,12 @@ export function CatalogView({
       </div>
 
       <div className="catalog-workspace">
-        <div className="character-grid" aria-label="角色图鉴">
-          {characters.length ? (
-            characters.map((character) => (
-              <button
-                className={`catalog-card ${selectedCharacter?.id === character.id ? 'selected' : ''}`}
-                key={character.id}
-                type="button"
-                onClick={() => onSelectCharacter(character.id)}
-              >
-                <div className="catalog-avatar">
-                  {character.avatarUrl || character.portraitUrl ? (
-                    <img src={character.avatarUrl || character.portraitUrl} alt={character.name} />
-                  ) : (
-                    <span>{character.name.slice(0, 1) || '?'}</span>
-                  )}
-                </div>
-                <strong>{character.name || '未命名角色'}</strong>
-                <span>{character.sourceTitle || '未知来源'}</span>
-                <small>{character.tags?.slice(0, 3).join(' / ') || '暂无标签'}</small>
-              </button>
-            ))
-          ) : (
-            <div className="empty-grid">
-              <h2>没有匹配角色</h2>
-              <p>调整搜索、标签或分类筛选后再试。</p>
-            </div>
-          )}
-        </div>
+        <VirtualCharacterGrid
+          characters={characters}
+          selectedCharacter={selectedCharacter}
+          onDeleteCharacter={onDeleteCharacter}
+          onSelectCharacter={onSelectCharacter}
+        />
 
         <PreviewDrawer
           character={selectedCharacter}

@@ -27,6 +27,7 @@ export type CharacterExternalRefs = {
   region?: string;
   servantId?: number;
   collectionNo?: number;
+  gameId?: string;
   sourceUrl?: string;
 };
 
@@ -37,6 +38,7 @@ export type CharacterImportMeta = {
   isJpFallback?: boolean;
   translationStatus?: 'none' | 'translated' | 'pending' | 'failed';
   officialFields?: string[];
+  portraitStatus?: string;
 };
 
 export type CatalogCollection = {
@@ -215,6 +217,8 @@ export type AcgplanDesktopApi = {
   deleteStory: (story: Story) => Promise<Story[]>;
   importStoryImage: (story: Story, blockId?: string) => Promise<Story>;
   removeStoryImage: (story: Story, assetPath: string) => Promise<Story>;
+  getLibraryCharacterSummaries: () => Promise<Character[]>;
+  getCharacter: (characterId: string) => Promise<Character | null>;
   getLibraryCharacters: () => Promise<Character[]>;
   saveCharacter: (character: Character) => Promise<Character>;
   deleteCharacter: (character: Character) => Promise<Character[]>;

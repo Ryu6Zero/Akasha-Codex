@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Character, Story } from '../types';
 import {
+  buildStoryLinkIndex,
   collectWikiLinkLabels,
   deriveStoryLinkedCharacterIds,
   getStoryBacklinks,
@@ -69,5 +70,15 @@ describe('storyStore knowledge links', () => {
     expect(backlinks).toHaveLength(1);
     expect(backlinks[0]).toMatchObject({ storyId: 'story-a', storyTitle: 'Singularity' });
     expect(backlinks[0].excerpt).toContain('[[Shielder]]');
+  });
+
+  it('builds a reusable story link index for linked ids and backlinks', () => {
+    const storyLinkIndex = buildStoryLinkIndex([baseStory], [baseCharacter]);
+
+    expect(storyLinkIndex.characterWikiIndex.get('shielder')?.id).toBe('char-a');
+    expect(storyLinkIndex.storyLinkedCharacterIds.get('story-a')).toEqual(['char-a']);
+    expect(storyLinkIndex.backlinksByCharacterId.get('char-a')).toEqual([
+      expect.objectContaining({ storyId: 'story-a', storyTitle: 'Singularity' }),
+    ]);
   });
 });

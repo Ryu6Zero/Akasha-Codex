@@ -30,6 +30,7 @@
     "@capacitor/filesystem": "^8.1.2",
     "@capacitor/preferences": "^8.0.1",
     "@capawesome/capacitor-file-picker": "^8.0.2",
+    "@tanstack/react-virtual": "^3.14.2",
     "react": "^19.2.1",
     "react-dom": "^19.2.1"
   },

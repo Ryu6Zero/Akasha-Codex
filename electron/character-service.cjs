@@ -111,6 +111,34 @@ function createCharacterService(context, dialog) {
     };
   }
 
+  function toCharacterSummaryPayload(characterDirectory, rawCharacter) {
+    const character = normalizeCharacter(rawCharacter);
+    const portraitPaths = character.portraitPath ? [character.portraitPath] : character.portraitPaths?.[0] ? [character.portraitPaths[0]] : [];
+    const avatarPaths = character.avatarPath ? [character.avatarPath] : character.avatarPaths?.[0] ? [character.avatarPaths[0]] : [];
+    const avatarPath = character.avatarPath || avatarPaths[0] || character.portraitPath || portraitPaths[0];
+    const portraitPath = character.portraitPath || portraitPaths[0];
+
+    return {
+      ...character,
+      avatarPath,
+      avatarPaths,
+      portraitPath,
+      portraitPaths,
+      voicePaths: [],
+      voiceAssets: [],
+      modelPaths: [],
+      attachmentPaths: [],
+      avatarUrl: context.toAssetUrl(avatarPath),
+      avatarUrls: avatarPath ? [context.toAssetUrl(avatarPath)] : [],
+      portraitUrl: context.toAssetUrl(portraitPath),
+      portraitUrls: portraitPath ? [context.toAssetUrl(portraitPath)] : [],
+      modelUrls: [],
+      voiceUrls: [],
+      attachmentUrls: [],
+      libraryDirectory: characterDirectory,
+    };
+  }
+
   function saveCharacterJson(rawCharacter) {
     context.ensureLibraryStructure();
     const character = normalizeCharacter(rawCharacter);
@@ -125,7 +153,7 @@ function createCharacterService(context, dialog) {
       updatedAt: new Date().toISOString(),
     };
 
-    ['avatarUrl', 'avatarUrls', 'portraitUrl', 'portraitUrls', 'voiceUrls', 'attachmentUrls', 'portraitDataUrl'].forEach((key) => {
+    ['avatarUrl', 'avatarUrls', 'portraitUrl', 'portraitUrls', 'voiceUrls', 'modelUrls', 'attachmentUrls', 'portraitDataUrl'].forEach((key) => {
       delete persistedCharacter[key];
     });
     persistedCharacter.voiceAssets = persistedCharacter.voiceAssets.map((voice) => {
@@ -150,6 +178,30 @@ function createCharacterService(context, dialog) {
       })
       .filter(Boolean)
       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  }
+
+  function loadLibraryCharacterSummaries() {
+    context.ensureLibraryStructure();
+    return fs
+      .readdirSync(context.getCharactersRoot(), { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => path.join(context.getCharactersRoot(), entry.name))
+      .filter((characterDirectory) => fs.existsSync(path.join(characterDirectory, 'character.json')))
+      .map((characterDirectory) => {
+        const character = context.readJsonFile(path.join(characterDirectory, 'character.json'), null);
+        return character ? toCharacterSummaryPayload(characterDirectory, { ...character, libraryDirectory: characterDirectory }) : null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  }
+
+  function loadCharacter(characterId) {
+    if (!characterId) return null;
+    const characterDirectory = path.join(context.getCharactersRoot(), characterId);
+    if (!context.isInside(context.getCharactersRoot(), characterDirectory)) return null;
+    const characterPath = path.join(characterDirectory, 'character.json');
+    const character = context.readJsonFile(characterPath, null);
+    return character ? toCharacterPayload(characterDirectory, { ...character, libraryDirectory: characterDirectory }) : null;
   }
 
   function getAssetConfig(assetType) {
@@ -301,7 +353,7 @@ function createCharacterService(context, dialog) {
     if (fs.existsSync(characterDirectory) && context.isInside(context.getCharactersRoot(), characterDirectory)) {
       fs.rmSync(characterDirectory, { recursive: true, force: true });
     }
-    return loadLibraryCharacters();
+    return loadLibraryCharacterSummaries();
   }
 
   function importCharacterFolder(sourceDirectory) {
@@ -368,6 +420,8 @@ function createCharacterService(context, dialog) {
 
   return {
     loadLibraryCharacters,
+    loadLibraryCharacterSummaries,
+    loadCharacter,
     saveCharacterJson,
     importAsset,
     selectImageForCrop,

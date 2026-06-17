@@ -3,7 +3,6 @@
   width: 100%;
   height: 100%;
   padding: clamp(14px, 2vw, 24px);
-  overflow: hidden;
 }
 
 .catalog-view {
@@ -11,6 +10,16 @@
   grid-template-rows: auto auto minmax(0, 1fr);
   gap: 14px;
   min-height: 0;
+  overflow: hidden;
+}
+
+.collections-view {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .top-nav,
@@ -38,8 +47,14 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
   gap: 18px;
+  align-content: start;
+  width: min(1120px, 100%);
   max-width: 1120px;
-  margin: 56px auto 0;
+  margin: clamp(20px, 5vh, 56px) auto 0;
+  min-height: 0;
+  overflow: visible;
+  padding-right: 6px;
+  padding-bottom: 24px;
 }
 
 .collection-tile {
@@ -172,6 +187,27 @@
   padding: 4px 4px 18px;
 }
 
+.virtualized-character-grid {
+  display: block;
+  position: relative;
+  contain: layout style;
+}
+
+.virtual-character-grid-inner {
+  position: relative;
+  min-width: 0;
+}
+
+.virtual-character-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  gap: 14px;
+  width: 100%;
+  height: 222px;
+}
+
 .catalog-card {
   display: grid;
   grid-template-rows: 128px auto auto auto;
@@ -221,6 +257,31 @@
 .catalog-card span,
 .catalog-card small {
   color: rgba(248, 240, 225, 0.66);
+}
+
+.catalog-context-menu {
+  position: fixed;
+  z-index: 120;
+  display: grid;
+  min-width: 180px;
+  padding: 6px;
+  border: 1px solid rgba(255, 110, 110, 0.3);
+  border-radius: 8px;
+  background: rgba(22, 18, 24, 0.96);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.38);
+}
+
+.catalog-context-menu .danger-button {
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 36px;
+  border-color: transparent;
+  background: transparent;
+}
+
+.catalog-context-menu .danger-button:hover {
+  border-color: rgba(255, 110, 110, 0.38);
+  background: rgba(255, 110, 110, 0.1);
 }
 
 .preview-drawer {

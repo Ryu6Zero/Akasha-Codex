@@ -95,6 +95,11 @@
     overflow: visible;
   }
 
+  .virtualized-character-grid {
+    height: min(70dvh, 720px);
+    overflow: auto;
+  }
+
   .preview-drawer {
     grid-template-rows: 360px auto auto;
   }

@@ -1,5 +1,5 @@
 import type { BrokenWikiLink, Character, Story, StoryCatalogMetadata, StoryCategory, StorySortMode } from '../types';
-import { collectWikiLinkLabels, findCharacterByWikiLabel, storyText } from './storyStore';
+import { buildCharacterWikiIndex, collectWikiLinkLabels, findCharacterByWikiLabelFromIndex, storyText } from './storyStore';
 
 export type StoryArchiveFilter = {
   stories: Story[];
@@ -69,6 +69,13 @@ export function createStoryCategoryId(categories: StoryCategory[], seed = Date.n
 }
 
 export function findBrokenWikiLinks(stories: Story[], characters: Character[]): BrokenWikiLink[] {
+  return findBrokenWikiLinksWithIndex(stories, buildCharacterWikiIndex(characters));
+}
+
+export function findBrokenWikiLinksWithIndex(
+  stories: Story[],
+  characterWikiIndex: Map<string, Character>,
+): BrokenWikiLink[] {
   return stories.flatMap((story) => {
     const links = story.blocks.flatMap((block) => [
       ...collectWikiLinkLabels(block.text).map((label) => ({ label, blockId: block.id, field: 'text' as const })),
@@ -76,7 +83,7 @@ export function findBrokenWikiLinks(stories: Story[], characters: Character[]): 
     ]);
 
     return links
-      .filter(({ label }) => !findCharacterByWikiLabel(characters, label))
+      .filter(({ label }) => !findCharacterByWikiLabelFromIndex(characterWikiIndex, label))
       .map(({ label, blockId, field }) => ({
         storyId: story.id,
         storyTitle: story.title || 'Untitled story',

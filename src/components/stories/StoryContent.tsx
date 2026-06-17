@@ -1,20 +1,23 @@
 import type { CSSProperties } from 'react';
 import type { Character, Story, StoryBlock } from '../../types';
-import { findCharacterByWikiLabel } from '../../storage/storyStore';
+import { buildCharacterWikiIndex, findCharacterByWikiLabelFromIndex } from '../../storage/storyStore';
 
 type StoryContentProps = {
   story: Story;
   characters: Character[];
+  characterWikiIndex?: Map<string, Character>;
   onOpenCharacter: (characterId: string) => void;
 };
 
-export function StoryContent({ story, characters, onOpenCharacter }: StoryContentProps) {
+export function StoryContent({ story, characters, characterWikiIndex, onOpenCharacter }: StoryContentProps) {
+  const wikiIndex = characterWikiIndex || buildCharacterWikiIndex(characters);
+
   return (
     <article className="story-content">
       {story.blocks.map((block, index) => (
         <StoryBlockView
           block={block}
-          characters={characters}
+          characterWikiIndex={wikiIndex}
           index={index}
           key={block.id}
           onOpenCharacter={onOpenCharacter}
@@ -26,12 +29,12 @@ export function StoryContent({ story, characters, onOpenCharacter }: StoryConten
 
 function StoryBlockView({
   block,
-  characters,
+  characterWikiIndex,
   index,
   onOpenCharacter,
 }: {
   block: StoryBlock;
-  characters: Character[];
+  characterWikiIndex: Map<string, Character>;
   index: number;
   onOpenCharacter: (characterId: string) => void;
 }) {
@@ -43,7 +46,7 @@ function StoryBlockView({
         {block.imageUrl ? <img src={block.imageUrl} alt={block.caption || block.imageFileName || ''} /> : <div />}
         {block.caption ? (
           <figcaption>
-            <WikiText value={block.caption} characters={characters} onOpenCharacter={onOpenCharacter} />
+            <WikiText value={block.caption} characterWikiIndex={characterWikiIndex} onOpenCharacter={onOpenCharacter} />
           </figcaption>
         ) : null}
       </figure>
@@ -53,7 +56,7 @@ function StoryBlockView({
   if (block.type === 'heading') {
     return (
       <h2 className="story-animated-block" style={blockStyle}>
-        <WikiText value={block.text} characters={characters} onOpenCharacter={onOpenCharacter} />
+        <WikiText value={block.text} characterWikiIndex={characterWikiIndex} onOpenCharacter={onOpenCharacter} />
       </h2>
     );
   }
@@ -61,25 +64,25 @@ function StoryBlockView({
   if (block.type === 'quote') {
     return (
       <blockquote className="story-animated-block" style={blockStyle}>
-        <WikiText value={block.text} characters={characters} onOpenCharacter={onOpenCharacter} />
+        <WikiText value={block.text} characterWikiIndex={characterWikiIndex} onOpenCharacter={onOpenCharacter} />
       </blockquote>
     );
   }
 
   return (
     <p className="story-animated-block" style={blockStyle}>
-      <WikiText value={block.text} characters={characters} onOpenCharacter={onOpenCharacter} />
+      <WikiText value={block.text} characterWikiIndex={characterWikiIndex} onOpenCharacter={onOpenCharacter} />
     </p>
   );
 }
 
 function WikiText({
   value,
-  characters,
+  characterWikiIndex,
   onOpenCharacter,
 }: {
   value: string;
-  characters: Character[];
+  characterWikiIndex: Map<string, Character>;
   onOpenCharacter: (characterId: string) => void;
 }) {
   const parts = splitWikiText(value);
@@ -88,7 +91,7 @@ function WikiText({
     <>
       {parts.map((part, index) => {
         if (!part.isLink) return <span key={`${index}-${part.text}`}>{part.text}</span>;
-        const character = findCharacterByWikiLabel(characters, part.text);
+        const character = findCharacterByWikiLabelFromIndex(characterWikiIndex, part.text);
         if (!character) return <span key={`${index}-${part.text}`}>[[{part.text}]]</span>;
 
         return (

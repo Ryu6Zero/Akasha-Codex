@@ -1,5 +1,12 @@
 import type { Character, Story, StoryBacklink, StoryBlock, StoryCatalogMetadata } from '../types';
 
+export type StoryLinkIndex = {
+  characterById: Map<string, Character>;
+  characterWikiIndex: Map<string, Character>;
+  storyLinkedCharacterIds: Map<string, string[]>;
+  backlinksByCharacterId: Map<string, StoryBacklink[]>;
+};
+
 export function createStoryBlock(type: StoryBlock['type'] = 'paragraph'): StoryBlock {
   return {
     id: crypto.randomUUID(),
@@ -69,18 +76,22 @@ export function normalizeStoryCatalog(catalog: StoryCatalogMetadata): StoryCatal
 }
 
 export function deriveStoryLinkedCharacterIds(story: Story, characters: Character[]): string[] {
-  const linkedIds = new Set(normalizeList(story.linkedCharacterIds));
+  return deriveStoryLinkedCharacterIdsFromIndex(story, buildCharacterWikiIndex(characters));
+}
+
+export function deriveStoryLinkedCharacterIdsFromIndex(story: Story, characterWikiIndex: Map<string, Character>): string[] {
+  const linkedIds = new Set(normalizeList(story.linkedCharacterIds).filter((id) => characterWikiIndex.has(normalizeLabel(id))));
   const labels = story.blocks.flatMap((block) => [
     ...collectWikiLinkLabels(block.text),
     ...collectWikiLinkLabels(block.caption || ''),
   ]);
 
   labels.forEach((label) => {
-    const character = findCharacterByWikiLabel(characters, label);
+    const character = findCharacterByWikiLabelFromIndex(characterWikiIndex, label);
     if (character) linkedIds.add(character.id);
   });
 
-  return [...linkedIds].filter((id) => characters.some((character) => character.id === id));
+  return [...linkedIds];
 }
 
 export function collectWikiLinkLabels(value = ''): string[] {
@@ -97,21 +108,56 @@ export function collectWikiLinkLabels(value = ''): string[] {
 }
 
 export function findCharacterByWikiLabel(characters: Character[], label: string): Character | undefined {
-  const normalizedLabel = normalizeLabel(label);
-  return characters.find((character) => {
-    const labels = [character.id, character.name, ...(character.aliases || [])].map(normalizeLabel);
-    return labels.includes(normalizedLabel);
+  return findCharacterByWikiLabelFromIndex(buildCharacterWikiIndex(characters), label);
+}
+
+export function findCharacterByWikiLabelFromIndex(characterWikiIndex: Map<string, Character>, label: string): Character | undefined {
+  return characterWikiIndex.get(normalizeLabel(label));
+}
+
+export function buildCharacterWikiIndex(characters: Character[]): Map<string, Character> {
+  const index = new Map<string, Character>();
+  characters.forEach((character) => {
+    [character.id, character.name, ...(character.aliases || [])].forEach((label) => {
+      const normalizedLabel = normalizeLabel(label);
+      if (normalizedLabel && !index.has(normalizedLabel)) index.set(normalizedLabel, character);
+    });
   });
+  return index;
+}
+
+export function buildStoryLinkIndex(stories: Story[], characters: Character[]): StoryLinkIndex {
+  const characterById = new Map(characters.map((character) => [character.id, character]));
+  const characterWikiIndex = buildCharacterWikiIndex(characters);
+  const storyLinkedCharacterIds = new Map<string, string[]>();
+  const backlinksByCharacterId = new Map<string, StoryBacklink[]>();
+
+  stories.forEach((story) => {
+    const linkedIds = deriveStoryLinkedCharacterIdsFromIndex(story, characterWikiIndex);
+    storyLinkedCharacterIds.set(story.id, linkedIds);
+    linkedIds.forEach((characterId) => {
+      const character = characterById.get(characterId);
+      if (!character) return;
+      const backlinks = backlinksByCharacterId.get(characterId) || [];
+      backlinks.push({
+        storyId: story.id,
+        storyTitle: story.title || '未命名故事',
+        excerpt: storyReferenceExcerpt(story, character),
+      });
+      backlinksByCharacterId.set(characterId, backlinks);
+    });
+  });
+
+  return {
+    characterById,
+    characterWikiIndex,
+    storyLinkedCharacterIds,
+    backlinksByCharacterId,
+  };
 }
 
 export function getStoryBacklinks(character: Character, stories: Story[], characters: Character[]): StoryBacklink[] {
-  return stories
-    .filter((story) => deriveStoryLinkedCharacterIds(story, characters).includes(character.id))
-    .map((story) => ({
-      storyId: story.id,
-      storyTitle: story.title || '未命名故事',
-      excerpt: storyReferenceExcerpt(story, character),
-    }));
+  return buildStoryLinkIndex(stories, characters).backlinksByCharacterId.get(character.id) || [];
 }
 
 export function storyText(story: Story): string {

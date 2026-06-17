@@ -52,6 +52,8 @@ export function createMobileLibraryClient(): LibraryClient {
     deleteStory,
     importStoryImage,
     removeStoryImage,
+    getLibraryCharacterSummaries,
+    getCharacter,
     getLibraryCharacters,
     saveCharacter,
     deleteCharacter,
@@ -214,6 +216,31 @@ async function getLibraryCharacters(): Promise<Character[]> {
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
+async function getLibraryCharacterSummaries(): Promise<Character[]> {
+  await ensureLibraryStructure();
+  const entries = await safeReadDir(CHARACTERS_ROOT);
+  const characters = await Promise.all(
+    entries.map(async (entryName) => {
+      const directory = `${CHARACTERS_ROOT}/${entryName}`;
+      const character = await readJson<Character | null>(`${directory}/character.json`, null);
+      return character ? toCharacterSummaryPayload(directory, { ...character, libraryDirectory: directory }) : null;
+    }),
+  );
+
+  return characters
+    .filter((character): character is Character => Boolean(character))
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+}
+
+async function getCharacter(characterId: string): Promise<Character | null> {
+  await ensureLibraryStructure();
+  const normalizedId = normalizeLibraryPath(characterId);
+  if (!normalizedId || normalizedId.includes('/') || normalizedId === '..') return null;
+  const directory = `${CHARACTERS_ROOT}/${normalizedId}`;
+  const character = await readJson<Character | null>(`${directory}/character.json`, null);
+  return character ? toCharacterPayload(directory, { ...character, libraryDirectory: directory }) : null;
+}
+
 async function saveCharacter(character: Character): Promise<Character> {
   await ensureLibraryStructure();
   const normalized = normalizeCharacter(character);
@@ -233,7 +260,7 @@ async function saveCharacter(character: Character): Promise<Character> {
 async function deleteCharacter(character: Character): Promise<Character[]> {
   const directory = character.libraryDirectory || `${CHARACTERS_ROOT}/${character.id}`;
   await safeRemoveDirectory(directory);
-  return getLibraryCharacters();
+  return getLibraryCharacterSummaries();
 }
 
 async function importAsset(character: Character, assetType: AssetType): Promise<Character> {
@@ -387,6 +414,33 @@ async function toCharacterPayload(directory: string, character: Character): Prom
     voicePaths: voiceAssets.map((voice) => voice.filePath),
     voiceUrls,
     attachmentUrls,
+  };
+}
+
+async function toCharacterSummaryPayload(directory: string, character: Character): Promise<Character> {
+  const normalized = normalizeCharacter(character);
+  const avatarPath = normalized.avatarPath || normalized.avatarPaths?.[0] || normalized.portraitPath || normalized.portraitPaths?.[0];
+  const portraitPath = normalized.portraitPath || normalized.portraitPaths?.[0];
+  const avatarUrl = await toAssetUrl(avatarPath);
+
+  return {
+    ...normalized,
+    libraryDirectory: directory,
+    avatarPath,
+    avatarPaths: avatarPath ? [avatarPath] : [],
+    avatarUrl,
+    avatarUrls: avatarUrl ? [avatarUrl] : [],
+    portraitPath,
+    portraitPaths: portraitPath ? [portraitPath] : [],
+    portraitUrl: avatarPath === portraitPath ? avatarUrl : undefined,
+    portraitUrls: [],
+    modelPaths: [],
+    modelUrls: [],
+    voiceAssets: [],
+    voicePaths: [],
+    voiceUrls: [],
+    attachmentPaths: [],
+    attachmentUrls: [],
   };
 }
 

@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Character, Story, StoryCatalogMetadata, StoryCategory, StorySortMode } from '../../types';
-import { createEmptyStory, deriveStoryLinkedCharacterIds, normalizeStory } from '../../storage/storyStore';
+import { createEmptyStory, deriveStoryLinkedCharacterIds, normalizeStory, type StoryLinkIndex } from '../../storage/storyStore';
 import {
   countStoriesByCategory,
   createStoryCategoryId,
   filterStoriesForArchive,
-  findBrokenWikiLinks,
+  findBrokenWikiLinksWithIndex,
   getAvailableStoryTags,
 } from '../../storage/storyQueries';
 import { createLibraryHealthReport } from '../../storage/libraryHealth';
@@ -19,6 +19,7 @@ type StoryArchiveViewProps = {
   storyCatalog: StoryCatalogMetadata;
   stories: Story[];
   characters: Character[];
+  storyLinkIndex: StoryLinkIndex;
   selectedStoryId: string | null;
   canImportImages: boolean;
   onSelectedStoryChange: (storyId: string) => void;
@@ -36,6 +37,7 @@ export function StoryArchiveView({
   storyCatalog,
   stories,
   characters,
+  storyLinkIndex,
   selectedStoryId,
   canImportImages,
   onSelectedStoryChange,
@@ -81,8 +83,8 @@ export function StoryArchiveView({
   );
   const selectedStory = stories.find((story) => story.id === selectedStoryId) || filteredStories[0] || null;
   const categoryCounts = useMemo(() => countStoriesByCategory(storyCatalog.categories, stories), [stories, storyCatalog.categories]);
-  const brokenWikiLinks = useMemo(() => findBrokenWikiLinks(stories, characters), [characters, stories]);
-  const healthReport = useMemo(() => createLibraryHealthReport(characters, stories, storyCatalog), [characters, stories, storyCatalog]);
+  const brokenWikiLinks = useMemo(() => findBrokenWikiLinksWithIndex(stories, storyLinkIndex.characterWikiIndex), [stories, storyLinkIndex]);
+  const healthReport = useMemo(() => createLibraryHealthReport(characters, stories, storyCatalog, storyLinkIndex), [characters, stories, storyCatalog, storyLinkIndex]);
   const brokenLinkCounts = useMemo(() => {
     const counts = new Map<string, number>();
     brokenWikiLinks.forEach((link) => counts.set(link.storyId, (counts.get(link.storyId) || 0) + 1));
@@ -91,9 +93,9 @@ export function StoryArchiveView({
   const selectedStoryBrokenLinks = selectedStory ? brokenWikiLinks.filter((link) => link.storyId === selectedStory.id) : [];
   const linkedCharacters = useMemo(() => {
     if (!selectedStory) return [];
-    const ids = deriveStoryLinkedCharacterIds(selectedStory, characters);
-    return ids.flatMap((id) => characters.find((character) => character.id === id) || []);
-  }, [characters, selectedStory]);
+    const ids = storyLinkIndex.storyLinkedCharacterIds.get(selectedStory.id) || [];
+    return ids.flatMap((id) => storyLinkIndex.characterById.get(id) || []);
+  }, [selectedStory, storyLinkIndex]);
 
   function createStory(): void {
     setEditingStory(createEmptyStory(selectedCategoryId));
@@ -266,7 +268,12 @@ export function StoryArchiveView({
                   )}
                 </div>
               </div>
-              <StoryContent story={selectedStory} characters={characters} onOpenCharacter={onOpenCharacter} />
+              <StoryContent
+                story={selectedStory}
+                characters={characters}
+                characterWikiIndex={storyLinkIndex.characterWikiIndex}
+                onOpenCharacter={onOpenCharacter}
+              />
             </>
           ) : (
             <div className="empty-grid">

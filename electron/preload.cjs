@@ -21,6 +21,8 @@ contextBridge.exposeInMainWorld('acgplan', {
   importStoryImage: (story, blockId) => ipcRenderer.invoke('stories:importImage', story, blockId),
   removeStoryImage: (story, assetPath) => ipcRenderer.invoke('stories:removeImage', story, assetPath),
   getLibraryCharacters: () => ipcRenderer.invoke('library:getCharacters'),
+  getLibraryCharacterSummaries: () => ipcRenderer.invoke('library:getCharacterSummaries'),
+  getCharacter: (characterId) => ipcRenderer.invoke('library:getCharacter', characterId),
   saveCharacter: (character) => ipcRenderer.invoke('library:saveCharacter', character),
   deleteCharacter: (character) => ipcRenderer.invoke('library:deleteCharacter', character),
   importAsset: (character, assetType) => ipcRenderer.invoke('library:importAsset', character, assetType),

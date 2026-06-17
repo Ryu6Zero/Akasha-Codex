@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
 import { CatalogView } from './components/CatalogView';
 import { CollectionsView } from './components/CollectionsView';
 import { ConfirmDialog } from './components/ConfirmDialog';
@@ -13,8 +13,13 @@ import { useSound } from './hooks/useSound';
 import { useStoryActions } from './hooks/useStoryActions';
 import { LanguageProvider } from './i18n/LanguageContext';
 import { loadAppPreferences, saveAppPreferences } from './storage/appPreferences';
-import { countCharactersByCollection, filterCharactersForCatalog, getAvailableCharacterTags } from './storage/characterQueries';
-import { deriveStoryLinkedCharacterIds, getStoryBacklinks } from './storage/storyStore';
+import {
+  buildCharacterCatalogIndex,
+  countCharactersByCollectionFromIndex,
+  filterCharacterIndexForCatalog,
+  getAvailableCharacterTagsFromIndex,
+} from './storage/characterQueries';
+import { buildStoryLinkIndex } from './storage/storyStore';
 import type {
   AppPreferences,
   CatalogMetadata,
@@ -57,6 +62,7 @@ function AppContent() {
     setSortMode,
     isLoading,
     reloadLibrary,
+    loadCharacterDetail,
   } = useLibraryData();
   const [screen, setScreen] = useState<AppScreen>('home');
   const [selectedCollectionId, setSelectedCollectionId] = useState('all');
@@ -73,32 +79,36 @@ function AppContent() {
   const storyActions = useStoryActions({ libraryClient, setStories, setStoryCatalog, setSelectedStoryId });
   const playSound = useSound(appPreferences);
 
-  const availableTags = useMemo(() => getAvailableCharacterTags(characters), [characters]);
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+  const characterIndex = useMemo(() => buildCharacterCatalogIndex(characters), [characters]);
+  const characterById = useMemo(() => new Map(characters.map((character) => [character.id, character])), [characters]);
+  const storyLinkIndex = useMemo(() => buildStoryLinkIndex(stories, characters), [characters, stories]);
+  const availableTags = useMemo(() => getAvailableCharacterTagsFromIndex(characterIndex), [characterIndex]);
 
   const filteredCharacters = useMemo(() => {
-    return filterCharactersForCatalog({
-      characters,
+    return filterCharacterIndexForCatalog({
+      index: characterIndex,
       collections: catalog.collections,
-      searchQuery,
+      searchQuery: deferredSearchQuery,
       selectedCollectionId,
       selectedTag,
       sortMode,
     });
-  }, [catalog.collections, characters, searchQuery, selectedCollectionId, selectedTag, sortMode]);
+  }, [catalog.collections, characterIndex, deferredSearchQuery, selectedCollectionId, selectedTag, sortMode]);
 
-  const selectedCharacter = useMemo(() => characters.find((character) => character.id === selectedCharacterId) ?? filteredCharacters[0] ?? null, [characters, filteredCharacters, selectedCharacterId]);
+  const selectedCharacter = useMemo(() => (selectedCharacterId ? characterById.get(selectedCharacterId) : null) ?? filteredCharacters[0] ?? null, [characterById, filteredCharacters, selectedCharacterId]);
   const fullscreenCharacter = detailCharacter ?? selectedCharacter;
   const fullscreenStoryBacklinks = useMemo(
-    () => (fullscreenCharacter ? getStoryBacklinks(fullscreenCharacter, stories, characters) : []),
-    [characters, fullscreenCharacter, stories],
+    () => (fullscreenCharacter ? storyLinkIndex.backlinksByCharacterId.get(fullscreenCharacter.id) || [] : []),
+    [fullscreenCharacter, storyLinkIndex],
   );
 
-  const collectionCounts = useMemo(() => countCharactersByCollection(catalog.collections, characters), [catalog.collections, characters]);
+  const collectionCounts = useMemo(() => countCharactersByCollectionFromIndex(catalog.collections, characterIndex), [catalog.collections, characterIndex]);
   const deleteDialog = useMemo(() => {
     if (!deleteTarget) return null;
     if (deleteTarget.type === 'character') {
       const character = deleteTarget.character;
-      const backlinkCount = getStoryBacklinks(character, stories, characters).length;
+      const backlinkCount = storyLinkIndex.backlinksByCharacterId.get(character.id)?.length || 0;
       return {
         title: `删除角色「${character.name || '未命名角色'}」？`,
         message: '这个操作会删除资料库中的角色文件夹和托管资源。',
@@ -113,7 +123,7 @@ function AppContent() {
     }
 
     const story = deleteTarget.story;
-    const linkedCharacterCount = deriveStoryLinkedCharacterIds(story, characters).length;
+    const linkedCharacterCount = storyLinkIndex.storyLinkedCharacterIds.get(story.id)?.length || 0;
     return {
       title: `删除故事「${story.title || '未命名故事'}」？`,
       message: '这个操作会删除故事记录和故事目录中的托管图片。',
@@ -124,7 +134,7 @@ function AppContent() {
       ],
       confirmLabel: '确认删除故事',
     };
-  }, [characters, deleteTarget, stories]);
+  }, [deleteTarget, storyLinkIndex]);
 
   function enterCollection(collectionId: string): void {
     playSound('navigation');
@@ -134,8 +144,14 @@ function AppContent() {
     setDetailCharacter(null);
   }
 
-  function openFullscreen(mode: DetailMode): void {
-    setDetailCharacter(null);
+  async function openFullscreen(mode: DetailMode, character = fullscreenCharacter): Promise<void> {
+    const currentCharacter = character;
+    if (currentCharacter) {
+      const loadedCharacter = await loadCharacterDetail(currentCharacter.id);
+      setDetailCharacter(loadedCharacter || currentCharacter);
+    } else {
+      setDetailCharacter(null);
+    }
     setDetailMode(mode);
     setIsFullscreenOpen(true);
   }
@@ -157,8 +173,9 @@ function AppContent() {
     setIsFullscreenOpen(true);
   }
 
-  function requestDeleteCharacter(character: Character): void {
-    setDeleteTarget({ type: 'character', character });
+  async function requestDeleteCharacter(character: Character): Promise<void> {
+    const loadedCharacter = await loadCharacterDetail(character.id);
+    setDeleteTarget({ type: 'character', character: loadedCharacter || character });
   }
 
   async function confirmDeleteTarget(): Promise<void> {
@@ -229,13 +246,16 @@ function AppContent() {
   }
 
   function openCharacterDetail(characterId: string): void {
-    const character = characters.find((currentCharacter) => currentCharacter.id === characterId);
+    const character = characterById.get(characterId);
     if (!character) return;
     playSound('link');
     setSelectedCharacterId(character.id);
-    setDetailCharacter(null);
+    setDetailCharacter(character);
     setDetailMode('view');
     setIsFullscreenOpen(true);
+    loadCharacterDetail(character.id).then((loadedCharacter) => {
+      if (loadedCharacter) setDetailCharacter(loadedCharacter);
+    });
   }
 
   function openStoryFromBacklink(storyId: string): void {
@@ -314,7 +334,7 @@ function AppContent() {
           onCreateCharacter={handleCreateCharacter}
           onEditCharacter={(character) => {
             setSelectedCharacterId(character.id);
-            openFullscreen('edit');
+            openFullscreen('edit', character);
           }}
           onDeleteCharacter={requestDeleteCharacter}
           onImportDirectory={libraryClient?.platform === 'desktop' ? handleImportDirectory : undefined}
@@ -328,6 +348,7 @@ function AppContent() {
           storyCatalog={storyCatalog}
           stories={stories}
           characters={characters}
+          storyLinkIndex={storyLinkIndex}
           selectedStoryId={selectedStoryId}
           canImportImages={Boolean(libraryClient)}
           onSelectedStoryChange={setSelectedStoryId}

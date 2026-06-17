@@ -1,14 +1,15 @@
 import type { Character, LibraryHealthIssue, LibraryHealthReport, Story, StoryCatalogMetadata } from '../types';
-import { getStoryBacklinks } from './storyStore';
-import { duplicateStoryCategoryNames, findBrokenWikiLinks } from './storyQueries';
+import { buildStoryLinkIndex, type StoryLinkIndex } from './storyStore';
+import { duplicateStoryCategoryNames, findBrokenWikiLinksWithIndex } from './storyQueries';
 
 export function createLibraryHealthReport(
   characters: Character[],
   stories: Story[],
   storyCatalog: StoryCatalogMetadata,
+  storyLinkIndex = buildStoryLinkIndex(stories, characters),
 ): LibraryHealthReport {
   const issues: LibraryHealthIssue[] = [];
-  const brokenWikiLinks = findBrokenWikiLinks(stories, characters);
+  const brokenWikiLinks = findBrokenWikiLinksWithIndex(stories, storyLinkIndex.characterWikiIndex);
   const duplicateCategoryNames = duplicateStoryCategoryNames(storyCatalog);
   const storiesByCategory = new Map<string, number>();
 
@@ -33,7 +34,7 @@ export function createLibraryHealthReport(
   });
 
   characters
-    .filter((character) => !getStoryBacklinks(character, stories, characters).length)
+    .filter((character) => !hasStoryBacklinks(storyLinkIndex, character.id))
     .forEach((character) => {
       issues.push({
         id: `orphan-character-${character.id}`,
@@ -91,4 +92,8 @@ export function createLibraryHealthReport(
     brokenWikiLinks,
     issues,
   };
+}
+
+function hasStoryBacklinks(storyLinkIndex: StoryLinkIndex, characterId: string): boolean {
+  return Boolean(storyLinkIndex.backlinksByCharacterId.get(characterId)?.length);
 }
