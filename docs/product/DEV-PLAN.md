@@ -236,3 +236,36 @@ Acceptance criteria:
 - User-created profile fields remain present after re-import.
 - Imported tags, collection ids, external refs, portrait paths, and avatar paths are de-duplicated.
 - `npm test`, `npm run build`, `npm run prepare:open-source`, and `npm run release:check` pass or report only documented environment warnings.
+
+## Phase 13: Batch Character Delete And Neural Cloud Import Prep
+
+Status: implemented.
+
+Scope:
+
+- Add catalog batch selection mode for current filtered character results.
+- Let users select individual cards, select all visible filtered cards, clear selection, and request batch deletion.
+- Reuse the existing danger confirmation pattern before deleting multiple characters.
+- Delete selected characters through the same library delete path as single-character deletion.
+- Clear deleted ids from selection state and keep preview/detail state consistent after deletion.
+- Prepare a local-only `Project Neural Cloud` import script that maps official facts into `profileFields[]` and uses the import-safe merge helper.
+
+Key files:
+
+- `src/App.tsx` - own batch selection state, confirmation target, and batch delete action.
+- `src/components/CatalogView.tsx` - expose batch controls in the catalog toolbar.
+- `src/components/VirtualCharacterGrid.tsx` - render selectable cards without breaking virtualization or right-click delete.
+- `src/hooks/useCharacterActions.ts` - add sequential batch deletion through the current library client.
+- `src/styles/catalog.css` and `src/styles/responsive.css` - keep batch controls and selected cards readable.
+- `tools/import-neural-cloud-gamekee.cjs` - local ignored import utility for Project Neural Cloud.
+
+Acceptance criteria:
+
+- Batch mode can be toggled on and off.
+- Individual cards can be selected and deselected without opening detail.
+- Select-all applies only to the currently filtered catalog result set.
+- Batch delete shows a danger confirmation with selected count.
+- Confirming batch delete removes all selected characters and clears the batch selection.
+- Canceling batch delete leaves all characters and selections unchanged.
+- `Project Neural Cloud` import script remains ignored/private and passes syntax check.
+- `npm test`, `npm run build`, `npm run prepare:open-source`, and `npm run release:check` pass or report only documented environment warnings.

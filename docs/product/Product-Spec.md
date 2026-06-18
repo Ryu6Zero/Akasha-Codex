@@ -131,6 +131,7 @@ Non-goals for this release:
 
 External game/wiki import scripts are local test-data utilities, not shipped online scraping features. Imported third-party assets must stay in the local `library/` and out of public builds.
 
+- `少前：云图计划` / `Project Neural Cloud` imports are local-only test-data utilities. They should create a dedicated catalog collection, import static character portraits where available, map official profile facts into `profileFields[]`, and preserve user-written `description` / `notes` on re-import.
 - Each imported work title must have its own catalog collection when it is used as a test source, including `二重螺旋`, `洛克人 Zero/ZX/ZXA`, and `洛克人 X DiVE`.
 - `DNF`, `鸣潮`, and `胜利女神：NIKKE` test imports must store one or more local portrait images plus a local character introduction/description for every imported entry when the source exposes them.
 - Test import scripts must set `collectionIds[]` to the matching work collection instead of relying only on broad tags.
@@ -159,6 +160,9 @@ Catalog browsing requirements:
 - Catalog card images should load lazily and should prefer thumbnails or the smallest available preview asset when a platform can provide one.
 - Collection selection must remain reachable when the collection list exceeds one screen. Mouse-wheel scrolling on the collection selection page is required; pagination may be added later if the list becomes too dense.
 - Character cards must expose a right-click context menu with a quick delete action that reuses the existing delete confirmation flow.
+- Catalog must support a batch selection mode for deleting multiple visible character cards from the current filtered result set.
+- Batch delete must require an explicit danger confirmation that shows selected count and does not run from a single accidental click.
+- After batch delete finishes, selected ids that no longer exist must be cleared and the preview selection must move to a remaining character or empty state.
 
 Knowledge-base requirements:
 
