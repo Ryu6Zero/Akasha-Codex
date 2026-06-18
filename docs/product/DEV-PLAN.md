@@ -115,3 +115,32 @@ Acceptance criteria:
 - Opening preview/detail/edit for one character does not reload or recompute the entire library.
 - Mobile character list loading does not eagerly convert all character assets into base64 data URLs.
 - Story backlinks and library health no longer perform `characters x stories x labels` scans during normal screen render.
+
+## Phase 9: Tag Governance Center
+
+Status: implemented.
+
+Scope:
+
+- Add a reusable character tag governance module that builds one tag index from character `tags[]` and catalog collection `tagRules[]`.
+- Add operations for renaming/merging tags across character JSON and collection rules, with per-character de-duplication.
+- Add an unused-tag cleanup operation that removes zero-character tags from collection rules.
+- Surface tag governance inside settings with usage counts, invalid-rule status, merge/rename controls, and cleanup actions.
+- Persist affected character records and catalog metadata through the existing local library APIs.
+
+Key files:
+
+- `src/storage/tagGovernance.ts` — build the tag index and apply tag rename/merge/delete mutations.
+- `src/storage/tagGovernance.test.ts` — cover usage counts, invalid rules, merge behavior, and unused-rule cleanup.
+- `src/App.tsx` — own persistence for bulk tag governance operations and refresh selected tag/collection state.
+- `src/components/SettingsPanel.tsx` — add the tag governance UI beside existing collection rule management.
+- `src/styles/overlays.css` and `src/styles/responsive.css` — keep the settings surface dense, readable, and responsive.
+
+Acceptance criteria:
+
+- Settings shows all character tags and collection-rule-only tags with character count and rule count.
+- Collection tag rules that point at no character-used tag are visibly marked as invalid.
+- Merging tag A into tag B updates all affected characters, all collection tag rules, and catalog filtering without leaving duplicate tags.
+- Renaming tag A to a new tag name produces the same consistent state as a merge.
+- Deleting an unused tag removes it from collection rules and does not allow deleting a tag still used by characters.
+- `npm test`, `npm run build`, `npm run prepare:open-source`, and `npm run release:check` pass or report only documented environment warnings.

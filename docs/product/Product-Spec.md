@@ -18,6 +18,7 @@ The target user collects character images, portraits, voice files, tags, source 
 - Right-side character preview drawer.
 - Full-screen character detail with inline view/edit modes, multiple portraits, description, notes, voice playback, and attachment metadata.
 - Character editing for classification, tags, multiple avatars, cover portrait, voices, notes, and attachments.
+- Tag governance for character tags and collection tag rules.
 - Local `catalog.json` for wallpaper, collection definitions, icons, and tag rules.
 - Local `character.json` files for every character entry.
 - Windows Electron package.
@@ -32,6 +33,8 @@ The target user collects character images, portraits, voice files, tags, source 
 - No bundled Live2D/Cubism runtime or skeletal animation preview surface in the main catalog.
 - No account system or remote sync.
 - No cloud database, remote indexing service, or account-bound search backend for large local libraries.
+- No AI tag auto-classification or remote taxonomy service in the first tag-governance release.
+- No bulk deletion of tags that are still used by characters without an explicit future preview/confirmation design.
 
 ## Functional Requirements
 
@@ -52,6 +55,26 @@ The target user collects character images, portraits, voice files, tags, source 
 - The inline editor can remove avatar, portrait, voice, model, and generic attachment references from the local library entry.
 - The app copies imported assets into the active library and never references arbitrary source paths as the canonical asset.
 - The app stores settings in `config/acgplan-settings.json`.
+
+## Tag Governance Requirements
+
+Character tags are shared product data, not loose decoration. The app must expose a tag governance surface inside settings so the user can keep character tags, collection rules, and catalog filters consistent as the library grows.
+
+MVP scope:
+
+- Show one unified character tag index derived from all character `tags[]` plus all catalog collection `tagRules[]`.
+- For every tag, show character usage count, collection-rule usage count, and whether the tag is an invalid rule that no character currently uses.
+- Merge one source tag into one target tag. The operation must update every affected character `tags[]`, de-duplicate tags per character, update every matching collection `tagRules[]`, and refresh catalog filters and collection counts from the same resulting index.
+- Rename a tag by applying the same data mutation as a merge into a new target tag name.
+- Delete an unused tag rule. MVP deletion is limited to tags with zero character usage; it removes that tag from collection `tagRules[]` so invisible conditions do not stay behind.
+- Prevent no-op or dangerous operations: empty target tag, same source/target tag, deleting a character-used tag, and creating duplicate tags inside one character.
+- Persist all affected character JSON files and `catalog.json` through the existing local library save path.
+
+Non-goals for this release:
+
+- Story tags and story category rules stay outside this pass.
+- Tag synonyms, aliases, hierarchical taxonomy, batch import mapping, and AI tagging stay in backlog.
+- Destructive deletion of character-used tags requires a later preview screen and is not part of MVP.
 
 ## Local Test Import Requirements
 

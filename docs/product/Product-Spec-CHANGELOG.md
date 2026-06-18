@@ -1,5 +1,10 @@
 # Product Spec Changelog
 
+## 2026-06-18
+
+- Added the character tag governance center scope: unified tag index, usage counts, invalid collection-rule detection, tag merge/rename, and unused-rule cleanup.
+- Kept story tags, AI tagging, synonyms, taxonomy, and destructive deletion of character-used tags out of the MVP.
+
 ## 2026-06-16
 
 - Removed the experimental NIKKE skeletal animation preview scope after local testing showed poor presentation quality.
