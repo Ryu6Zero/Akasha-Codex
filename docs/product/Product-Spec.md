@@ -19,6 +19,7 @@ The target user collects character images, portraits, voice files, tags, source 
 - Full-screen character detail with inline view/edit modes, multiple portraits, description, notes, voice playback, and attachment metadata.
 - Character editing for classification, tags, multiple avatars, cover portrait, voices, notes, and attachments.
 - Tag governance for character tags and collection tag rules.
+- Asset completeness reporting for character library maintenance.
 - Local `catalog.json` for wallpaper, collection definitions, icons, and tag rules.
 - Local `character.json` files for every character entry.
 - Windows Electron package.
@@ -35,6 +36,7 @@ The target user collects character images, portraits, voice files, tags, source 
 - No cloud database, remote indexing service, or account-bound search backend for large local libraries.
 - No AI tag auto-classification or remote taxonomy service in the first tag-governance release.
 - No bulk deletion of tags that are still used by characters without an explicit future preview/confirmation design.
+- No automatic deletion of orphan asset files in the first asset-report release.
 
 ## Functional Requirements
 
@@ -75,6 +77,26 @@ Non-goals for this release:
 - Story tags and story category rules stay outside this pass.
 - Tag synonyms, aliases, hierarchical taxonomy, batch import mapping, and AI tagging stay in backlog.
 - Destructive deletion of character-used tags requires a later preview screen and is not part of MVP.
+
+## Asset Completeness Report Requirements
+
+The local library must give the user a maintenance report for character assets before they start doing destructive cleanup. The first version is a read-only report, not a repair tool.
+
+MVP scope:
+
+- Generate a desktop library report from the active local `library/` folder.
+- Write both JSON and Markdown reports under `library/reports/`.
+- Report summary must include total character count, avatar count, portrait count, voice count, model count, attachment count, missing asset reference count, orphan file count, and total managed character-asset size.
+- Per-character rows must include asset counts, missing referenced paths, orphan files inside the character folder, total size, and whether the character is missing a primary avatar, any portrait, or description text.
+- The Markdown report must include the largest character folders Top 20 by byte size.
+- The report is read-only. It must not delete files, rewrite character JSON, or alter catalog metadata.
+- Settings must expose a generate-report action and show the latest generated summary plus the output paths.
+
+Non-goals for this release:
+
+- No one-click cleanup, orphan deletion, asset compression, thumbnail generation, or duplicate-file hashing.
+- No story-image asset report in the first pass.
+- Android may return an unsupported message until a mobile-safe filesystem scan is designed.
 
 ## Local Test Import Requirements
 

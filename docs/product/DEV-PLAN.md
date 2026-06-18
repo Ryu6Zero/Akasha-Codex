@@ -144,3 +144,36 @@ Acceptance criteria:
 - Renaming tag A to a new tag name produces the same consistent state as a merge.
 - Deleting an unused tag removes it from collection rules and does not allow deleting a tag still used by characters.
 - `npm test`, `npm run build`, `npm run prepare:open-source`, and `npm run release:check` pass or report only documented environment warnings.
+
+## Phase 10: Character Asset Completeness Report
+
+Status: implemented.
+
+Scope:
+
+- Add a desktop asset report service that scans the active `library/characters/` folder without mutating files.
+- Generate JSON and Markdown reports under `library/reports/`.
+- Count character assets across avatars, portraits, voices, models, and attachments.
+- Detect missing referenced files and orphan files inside each character folder.
+- Rank the largest character folders Top 20 by managed asset byte size.
+- Surface report generation in settings with the latest summary and output paths.
+- Return an explicit unsupported message on mobile until a mobile-safe scan exists.
+
+Key files:
+
+- `electron/asset-report-service.cjs` — scan the desktop library and write JSON/Markdown reports.
+- `electron/main.cjs` and `electron/preload.cjs` — expose the report generation IPC.
+- `src/types.ts` and `src/platform/libraryClient.ts` — extend the shared client contract.
+- `src/platform/mobileLibraryClient.ts` — return an unsupported result for mobile.
+- `src/components/AssetReportPanel.tsx` — settings UI for report generation and summary display.
+- `src/components/SettingsPanel.tsx` — mount the asset report panel.
+- `src/styles/overlays.css` and `src/styles/responsive.css` — keep the report summary readable.
+
+Acceptance criteria:
+
+- The desktop app can generate both `asset-report-*.json` and `asset-report-*.md` under `library/reports/`.
+- The report summary includes total characters, avatars, portraits, voices, models, attachments, missing asset references, orphan files, and total size.
+- Missing referenced files and orphan files are listed per character.
+- The Markdown report includes largest character folders Top 20.
+- Generating a report does not mutate character JSON, catalog JSON, or asset files.
+- `npm test`, `npm run build`, `npm run prepare:open-source`, and `npm run release:check` pass or report only documented environment warnings.
