@@ -2,6 +2,22 @@
 
 All notable project-level changes are tracked here. Product planning history remains in `docs/product/CHANGELOG.md`.
 
+## 0.1.1-dev.4 - Catalog Scale And Release Guardrails
+
+### Added
+
+- Virtualized catalog card rendering for large character libraries.
+- Indexed catalog search, filtering, sorting, tag lookup, and collection counts.
+- Summary-first character loading with lazy detail loading on preview, edit, delete, and story-link flows.
+- Indexed story wiki-link and backlink lookup paths for story archive and library health checks.
+- A generated `10,000` character performance test covering catalog search, filters, sorting, and counts.
+- Open-source boundary checks for local import tools and Ryu6 workflow files.
+
+### Changed
+
+- Local import scripts are treated as private test-data utilities unless explicitly reviewed for public release.
+- Missing GitHub CLI now reports as a local release verification warning instead of a source release blocker.
+
 ## 0.1.0 - Initial Open Source Release
 
 ### Added
