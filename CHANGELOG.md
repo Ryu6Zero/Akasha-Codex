@@ -2,6 +2,20 @@
 
 All notable project-level changes are tracked here. Product planning history remains in `docs/product/CHANGELOG.md`.
 
+## 0.1.1-dev.7 - Structured Character Profiles
+
+### Added
+
+- Character records now support structured `profileFields[]` for official/source facts.
+- Fullscreen detail now shows structured profile facts separately from the user-written introduction and personal notes.
+- Detail edit mode can add, update, and remove structured profile fields inline.
+- Catalog search now includes structured profile field groups, labels, and values.
+- Added normalization tests that preserve user descriptions while cleaning empty and duplicate profile rows.
+
+### Changed
+
+- Product spec and development plan now define the structured profile field MVP boundary.
+
 ## 0.1.1-dev.6 - Asset Completeness Report
 
 ### Added
