@@ -2,6 +2,19 @@
 
 All notable project-level changes are tracked here. Product planning history remains in `docs/product/CHANGELOG.md`.
 
+## 0.1.1-dev.6 - Asset Completeness Report
+
+### Added
+
+- Settings now includes a read-only character asset completeness report generator.
+- Desktop report generation writes JSON and Markdown reports under `library/reports/`.
+- Reports include asset counts, missing references, orphan files, total managed asset size, and largest character folders Top 20.
+- Added a filesystem-backed test for report generation with missing references and orphan files.
+
+### Changed
+
+- Product spec and development plan now define the asset-report MVP boundary and non-goals.
+
 ## 0.1.1-dev.5 - Tag Governance Center
 
 ### Added
