@@ -18,6 +18,7 @@ The target user collects character images, portraits, voice files, tags, source 
 - Right-side character preview drawer.
 - Full-screen character detail with inline view/edit modes, multiple portraits, description, notes, voice playback, and attachment metadata.
 - Character editing for classification, tags, multiple avatars, cover portrait, voices, notes, and attachments.
+- Structured character profile fields for official/source facts such as rarity, class, CV, artist, attributes, and profile segments.
 - Tag governance for character tags and collection tag rules.
 - Asset completeness reporting for character library maintenance.
 - Local `catalog.json` for wallpaper, collection definitions, icons, and tag rules.
@@ -50,6 +51,9 @@ The target user collects character images, portraits, voice files, tags, source 
 - Clicking the preview drawer expands into full-screen detail.
 - Clicking Edit in detail switches the detail page into inline edit mode.
 - Avatar and portrait images open a larger lightbox preview with zoom and drag.
+- Character detail must separate structured profile facts from user-written introduction and notes.
+- The inline editor can add, edit, reorder by save order, and remove structured profile fields without rewriting the user-written introduction.
+- Structured profile fields are searchable through catalog search alongside name, source, aliases, tags, description, and notes.
 - Multiple avatars can be imported, and one avatar can be marked as the primary avatar.
 - Multiple portraits can be imported, and one portrait can be marked as the cover portrait.
 - Voices are local assets with label, optional line text, file path, and audio playback.
@@ -97,6 +101,28 @@ Non-goals for this release:
 - No one-click cleanup, orphan deletion, asset compression, thumbnail generation, or duplicate-file hashing.
 - No story-image asset report in the first pass.
 - Android may return an unsupported message until a mobile-safe filesystem scan is designed.
+
+## Structured Character Profile Requirements
+
+Character detail is not a junk drawer. Official/source metadata and user writing must live in different fields so future imports, edits, and review work do not trample personal notes.
+
+MVP scope:
+
+- Add `profileFields[]` to character records.
+- Each profile field stores `id`, `label`, `value`, and optional `group`.
+- Typical labels include source type, rarity, class, faction, element, CV, artist, birthday, height, region, and official profile segments.
+- Detail view shows structured profile fields before the user-written introduction and personal notes.
+- Edit mode lets the user add, edit, and remove fields inline.
+- Empty label/value rows are ignored on save.
+- Duplicate rows with the same normalized label and value are collapsed during normalization.
+- Existing `description` remains the user-facing introduction and must not be overwritten by structured profile editing or normalization.
+- Existing `notes` remains personal notes and maintenance comments.
+
+Non-goals for this release:
+
+- No external re-import pipeline rewrite.
+- No schema-specific editor per source game.
+- No automatic translation, field mapping, or AI profile extraction.
 
 ## Local Test Import Requirements
 
@@ -172,6 +198,7 @@ library/
 `character.json` stores:
 
 - base fields: id, name, source, aliases, tags, description, notes
+- `profileFields[]` with id, label, value, and optional group for structured official/source facts
 - `collectionIds[]`
 - primary avatar, all avatar paths, cover portrait, and all portrait paths
 - `voiceAssets[]`

@@ -177,3 +177,34 @@ Acceptance criteria:
 - The Markdown report includes largest character folders Top 20.
 - Generating a report does not mutate character JSON, catalog JSON, or asset files.
 - `npm test`, `npm run build`, `npm run prepare:open-source`, and `npm run release:check` pass or report only documented environment warnings.
+
+## Phase 11: Structured Character Profile Fields
+
+Status: implemented.
+
+Scope:
+
+- Add `profileFields[]` to character records for structured official/source facts.
+- Keep `description` as the user-facing introduction and `notes` as personal maintenance notes.
+- Normalize profile fields in both shared storage code and the desktop character service.
+- Show structured profile fields separately from the introduction and notes in fullscreen character detail.
+- Let edit mode add, edit, and remove structured profile fields inline.
+- Include structured profile labels, values, and groups in catalog search.
+
+Key files:
+
+- `src/types.ts` - add the shared profile field type and character field.
+- `src/storage/characterStore.ts` - normalize profile fields while preserving description and notes.
+- `electron/character-service.cjs` - persist normalized profile fields in desktop saves and loads.
+- `src/storage/characterQueries.ts` - include profile fields in indexed search text.
+- `src/components/detail/ProfilePanels.tsx` - add readonly and editable profile field panels.
+- `src/styles/overlays.css` - keep the detail profile field editor dense and readable.
+- `src/storage/characterStore.test.ts` - cover normalization, de-duplication, and description preservation.
+
+Acceptance criteria:
+
+- Detail view clearly separates structured profile facts, user-written introduction, and personal notes.
+- Edit mode can add, update, and remove profile fields without touching description or notes.
+- Saving ignores empty profile rows and collapses duplicate label/value rows.
+- Catalog search can find profile field labels, values, and groups.
+- `npm test`, `npm run build`, `npm run prepare:open-source`, and `npm run release:check` pass or report only documented environment warnings.

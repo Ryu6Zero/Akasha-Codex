@@ -5,6 +5,7 @@
 - Added the character tag governance center scope: unified tag index, usage counts, invalid collection-rule detection, tag merge/rename, and unused-rule cleanup.
 - Kept story tags, AI tagging, synonyms, taxonomy, and destructive deletion of character-used tags out of the MVP.
 - Added a read-only character asset completeness report scope that exports JSON and Markdown reports with missing references, orphan files, size totals, and largest character folders.
+- Added structured character profile fields so official/source facts are displayed and edited separately from user-written introductions and notes.
 
 ## 2026-06-16
 
