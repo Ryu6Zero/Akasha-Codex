@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { AssetType, CatalogMetadata, Character, CropImageSelection, StoryBacklink } from '../types';
 import type { LibraryClient } from '../platform/libraryClient';
-import { normalizeCharacter } from '../storage/characterStore';
+import { normalizeCharacter, normalizeProfileFields } from '../storage/characterStore';
 import { AttachmentSection } from './detail/AttachmentSection';
 import { ImageAssetGrid } from './detail/ImageAssetGrid';
 import { EditableProfile, ReadonlyProfile } from './detail/ProfilePanels';
@@ -65,6 +65,10 @@ export function FullscreenDetail({
 
   function updateDraft(patch: Partial<Character>): void {
     setDraft((currentDraft) => normalizeCharacter({ ...currentDraft, ...patch }));
+  }
+
+  function updateProfileFields(profileFields: Character['profileFields']): void {
+    setDraft((currentDraft) => ({ ...currentDraft, profileFields }));
   }
 
   function openLightbox(imageUrl?: string): void {
@@ -145,6 +149,7 @@ export function FullscreenDetail({
       ...draft,
       name: draft.name.trim(),
       sourceTitle: draft.sourceTitle.trim(),
+      profileFields: normalizeProfileFields(draft.profileFields),
       description: draft.description.trim(),
       notes: draft.notes.trim(),
       aliases: draft.aliases.map((alias) => alias.trim()).filter(Boolean),
@@ -201,6 +206,7 @@ export function FullscreenDetail({
               draft={draft}
               tagInput={tagInput}
               onDraftChange={updateDraft}
+              onProfileFieldsChange={updateProfileFields}
               onTagInputChange={setTagInput}
               onAddTag={addTag}
               onRemoveTag={removeTag}

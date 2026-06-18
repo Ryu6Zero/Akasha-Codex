@@ -1,4 +1,4 @@
-import type { Character, VoiceAsset } from '../types';
+import type { Character, CharacterProfileField, VoiceAsset } from '../types';
 
 export function createEmptyCharacter(): Character {
   const now = new Date().toISOString();
@@ -10,6 +10,7 @@ export function createEmptyCharacter(): Character {
     aliases: [],
     tags: [],
     collectionIds: [],
+    profileFields: [],
     description: '',
     notes: '',
     voicePaths: [],
@@ -45,6 +46,7 @@ export function normalizeCharacter(character: Partial<Character> & Pick<Characte
     : character.modelPath
       ? [character.modelPath]
       : [];
+  const profileFields = normalizeProfileFields(character.profileFields);
 
   return {
     ...character,
@@ -54,6 +56,7 @@ export function normalizeCharacter(character: Partial<Character> & Pick<Characte
     aliases: character.aliases || [],
     tags,
     collectionIds: character.collectionIds || [],
+    profileFields,
     description: character.description || '',
     notes: character.notes || '',
     avatarPath,
@@ -68,6 +71,30 @@ export function normalizeCharacter(character: Partial<Character> & Pick<Characte
     createdAt: character.createdAt || new Date().toISOString(),
     updatedAt: character.updatedAt || new Date().toISOString(),
   };
+}
+
+export function normalizeProfileFields(profileFields?: CharacterProfileField[]): CharacterProfileField[] {
+  if (!Array.isArray(profileFields)) return [];
+
+  const seen = new Set<string>();
+
+  return profileFields.flatMap((field, index) => {
+    const label = String(field?.label || '').trim();
+    const value = String(field?.value || '').trim();
+    const group = String(field?.group || '').trim();
+    if (!label || !value) return [];
+
+    const key = `${label.toLowerCase()}\u0000${value.toLowerCase()}`;
+    if (seen.has(key)) return [];
+    seen.add(key);
+
+    return [{
+      id: String(field?.id || '').trim() || `profile-${index + 1}`,
+      label,
+      value,
+      ...(group ? { group } : {}),
+    }];
+  });
 }
 
 function normalizeVoiceAssets(voiceAssets?: VoiceAsset[], voicePaths?: string[]): VoiceAsset[] {

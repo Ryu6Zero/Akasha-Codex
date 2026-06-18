@@ -32,6 +32,7 @@ const baseCharacter: Character = {
   aliases: [],
   tags: [],
   collectionIds: [],
+  profileFields: [],
   description: '',
   notes: '',
   voicePaths: [],
@@ -112,6 +113,42 @@ describe('characterQueries', () => {
         sortMode: 'updatedAt',
       }).map((character) => character.id),
     ).toEqual(['amiya']);
+  });
+
+  it('searches structured profile labels, values, and groups', () => {
+    const characters: Character[] = [
+      {
+        ...baseCharacter,
+        id: 'lappland',
+        name: 'Lappland',
+        profileFields: [
+          { id: 'cv', group: '官方', label: 'CV', value: '今井麻美' },
+          { id: 'class', group: '战斗', label: '职业', value: '近卫' },
+        ],
+      },
+    ];
+    const index = buildCharacterCatalogIndex(characters);
+
+    expect(
+      filterCharacterIndexForCatalog({
+        index,
+        collections,
+        searchQuery: '近卫',
+        selectedCollectionId: 'all',
+        selectedTag: '',
+        sortMode: 'updatedAt',
+      }).map((character) => character.id),
+    ).toEqual(['lappland']);
+    expect(
+      filterCharacterIndexForCatalog({
+        index,
+        collections,
+        searchQuery: 'cv',
+        selectedCollectionId: 'all',
+        selectedTag: '',
+        sortMode: 'updatedAt',
+      }).map((character) => character.id),
+    ).toEqual(['lappland']);
   });
 
   it('keeps indexed catalog queries correct with 10000 character summaries', () => {

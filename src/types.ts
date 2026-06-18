@@ -194,6 +194,13 @@ export type AssetCompletenessReport = {
   characters: CharacterAssetReport[];
 };
 
+export type CharacterProfileField = {
+  id: string;
+  label: string;
+  value: string;
+  group?: string;
+};
+
 export type Character = {
   id: string;
   name: string;
@@ -201,6 +208,7 @@ export type Character = {
   aliases: string[];
   tags: string[];
   collectionIds: string[];
+  profileFields: CharacterProfileField[];
   description: string;
   notes: string;
   avatarPath?: string;

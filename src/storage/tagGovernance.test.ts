@@ -13,6 +13,7 @@ const baseCharacter: Character = {
   aliases: [],
   tags: [],
   collectionIds: [],
+  profileFields: [],
   description: '',
   notes: '',
   voicePaths: [],

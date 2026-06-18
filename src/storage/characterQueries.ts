@@ -12,6 +12,7 @@ export function buildCharacterCatalogIndex(characters: Character[]): CharacterCa
   return characters.map((character) => {
     const tags = character.tags || [];
     const collectionIds = character.collectionIds || [];
+    const profileFields = character.profileFields || [];
 
     return {
       character,
@@ -22,6 +23,7 @@ export function buildCharacterCatalogIndex(characters: Character[]): CharacterCa
         character.notes,
         ...(character.aliases || []),
         ...tags,
+        ...profileFields.flatMap((field) => [field.group, field.label, field.value]),
       ]
         .join(' ')
         .toLowerCase(),

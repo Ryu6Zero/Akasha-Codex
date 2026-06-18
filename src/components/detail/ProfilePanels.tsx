@@ -1,10 +1,11 @@
-import type { CatalogMetadata, Character } from '../../types';
+import type { CatalogMetadata, Character, CharacterProfileField } from '../../types';
 
 type EditableProfileProps = {
   catalog: CatalogMetadata;
   draft: Character;
   tagInput: string;
   onDraftChange: (patch: Partial<Character>) => void;
+  onProfileFieldsChange: (profileFields: CharacterProfileField[]) => void;
   onTagInputChange: (value: string) => void;
   onAddTag: (value: string) => void;
   onRemoveTag: (tag: string) => void;
@@ -16,6 +17,7 @@ export function EditableProfile({
   draft,
   tagInput,
   onDraftChange,
+  onProfileFieldsChange,
   onTagInputChange,
   onAddTag,
   onRemoveTag,
@@ -82,6 +84,51 @@ export function EditableProfile({
         </div>
       </section>
 
+      <section className="glass-panel profile-field-editor">
+        <div className="section-title-row">
+          <h2>结构化资料</h2>
+          <button
+            type="button"
+            onClick={() =>
+              onProfileFieldsChange([
+                ...(draft.profileFields || []),
+                { id: `profile-${Date.now()}-${(draft.profileFields || []).length + 1}`, group: '', label: '', value: '' },
+              ])
+            }
+          >
+            添加字段
+          </button>
+        </div>
+        <div className="profile-field-editor-list">
+          {(draft.profileFields || []).length ? (
+            draft.profileFields.map((field) => (
+              <div className="profile-field-editor-row" key={field.id}>
+                <input
+                  value={field.group || ''}
+                  onChange={(event) => updateProfileField(draft, field.id, { group: event.target.value }, onProfileFieldsChange)}
+                  placeholder="分组"
+                />
+                <input
+                  value={field.label}
+                  onChange={(event) => updateProfileField(draft, field.id, { label: event.target.value }, onProfileFieldsChange)}
+                  placeholder="字段名，如 CV、画师、稀有度"
+                />
+                <textarea
+                  value={field.value}
+                  onChange={(event) => updateProfileField(draft, field.id, { value: event.target.value }, onProfileFieldsChange)}
+                  placeholder="字段内容"
+                />
+                <button type="button" onClick={() => removeProfileField(draft, field.id, onProfileFieldsChange)}>
+                  删除
+                </button>
+              </div>
+            ))
+          ) : (
+            <p className="empty-profile-fields">暂无结构化资料。</p>
+          )}
+        </div>
+      </section>
+
       <section className="glass-panel long-text-editor">
         <h2>人物介绍</h2>
         <textarea value={draft.description} onChange={(event) => onDraftChange({ description: event.target.value })} placeholder="用于详情页展示的人物介绍" />
@@ -99,6 +146,10 @@ export function ReadonlyProfile({ character }: { character: Character }) {
   return (
     <>
       <section className="glass-panel">
+        <h2>结构化资料</h2>
+        <ProfileFieldList fields={character.profileFields || []} />
+      </section>
+      <section className="glass-panel">
         <h2>人物介绍</h2>
         <FormattedText value={character.description} fallback="暂无介绍。" />
       </section>
@@ -113,6 +164,45 @@ export function ReadonlyProfile({ character }: { character: Character }) {
         </div>
       </section>
     </>
+  );
+}
+
+function updateProfileField(
+  draft: Character,
+  fieldId: string,
+  patch: Partial<CharacterProfileField>,
+  onProfileFieldsChange: (profileFields: CharacterProfileField[]) => void,
+) {
+  onProfileFieldsChange(
+    (draft.profileFields || []).map((field) => (field.id === fieldId ? { ...field, ...patch } : field)),
+  );
+}
+
+function removeProfileField(
+  draft: Character,
+  fieldId: string,
+  onProfileFieldsChange: (profileFields: CharacterProfileField[]) => void,
+) {
+  onProfileFieldsChange((draft.profileFields || []).filter((field) => field.id !== fieldId));
+}
+
+function ProfileFieldList({ fields }: { fields: CharacterProfileField[] }) {
+  const visibleFields = fields.filter((field) => field.label.trim() && field.value.trim());
+
+  if (!visibleFields.length) return <p>暂无结构化资料。</p>;
+
+  return (
+    <dl className="profile-field-list">
+      {visibleFields.map((field) => (
+        <div key={field.id}>
+          <dt>
+            {field.group ? <span>{field.group}</span> : null}
+            {field.label}
+          </dt>
+          <dd>{field.value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 

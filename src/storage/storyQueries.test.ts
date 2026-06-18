@@ -49,6 +49,7 @@ const characters: Character[] = [
     aliases: [],
     tags: [],
     collectionIds: [],
+    profileFields: [],
     description: '',
     notes: '',
     voicePaths: [],

@@ -15,6 +15,7 @@ const baseCharacter: Character = {
   aliases: ['Shielder'],
   tags: [],
   collectionIds: [],
+  profileFields: [],
   description: '',
   notes: '',
   voicePaths: [],

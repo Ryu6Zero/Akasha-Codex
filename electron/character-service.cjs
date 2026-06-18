@@ -57,11 +57,13 @@ function createCharacterService(context, dialog) {
     const modelPaths = Array.isArray(rawCharacter.modelPaths)
       ? rawCharacter.modelPaths.filter(Boolean)
       : rawCharacter.modelPath ? [rawCharacter.modelPath] : [];
+    const profileFields = normalizeProfileFields(rawCharacter.profileFields);
 
     return {
       aliases: [],
       tags,
       collectionIds: [],
+      profileFields,
       description: '',
       notes: '',
       avatarPaths,
@@ -72,6 +74,7 @@ function createCharacterService(context, dialog) {
       attachmentPaths: [],
       ...rawCharacter,
       tags,
+      profileFields,
       avatarPath,
       avatarPaths,
       portraitPath,
@@ -82,6 +85,29 @@ function createCharacterService(context, dialog) {
       collectionIds: deriveCollectionIds({ ...rawCharacter, tags, collectionIds: rawCharacter.collectionIds || [] }),
       attachmentPaths: rawCharacter.attachmentPaths || [],
     };
+  }
+
+  function normalizeProfileFields(profileFields) {
+    if (!Array.isArray(profileFields)) return [];
+    const seen = new Set();
+
+    return profileFields.flatMap((field, index) => {
+      const label = String(field?.label || '').trim();
+      const value = String(field?.value || '').trim();
+      const group = String(field?.group || '').trim();
+      if (!label || !value) return [];
+
+      const key = `${label.toLowerCase()}\u0000${value.toLowerCase()}`;
+      if (seen.has(key)) return [];
+      seen.add(key);
+
+      return [{
+        id: String(field?.id || '').trim() || `profile-${index + 1}`,
+        label,
+        value,
+        ...(group ? { group } : {}),
+      }];
+    });
   }
 
   function toCharacterPayload(characterDirectory, rawCharacter) {
@@ -383,6 +409,7 @@ function createCharacterService(context, dialog) {
       aliases: [],
       tags,
       collectionIds: deriveCollectionIds({ sourceTitle, tags, collectionIds: [] }),
+      profileFields: [],
       description: '',
       notes: '从本地目录导入。',
       avatarPath,
