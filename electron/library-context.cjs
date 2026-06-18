@@ -29,7 +29,9 @@ function createLibraryContext(app) {
     const explicitRoot = process.env.ACGPLAN_WORKSPACE_ROOT;
     if (hasLocalDataRoot(explicitRoot)) return explicitRoot;
 
-    const unpackedReleaseRoot = path.basename(packageRoot).toLowerCase() === 'win-unpacked'
+    const packageRootName = path.basename(packageRoot).toLowerCase();
+    const isUnpackedReleaseRoot = packageRootName === 'win-unpacked' || packageRootName.endsWith('-win-unpacked');
+    const unpackedReleaseRoot = isUnpackedReleaseRoot
       ? path.dirname(packageRoot)
       : '';
     const releaseRoot = path.basename(packageRoot).toLowerCase() === 'release' ? packageRoot : unpackedReleaseRoot;
@@ -59,10 +61,6 @@ function createLibraryContext(app) {
     const configuredLibraryRoot = typeof settings.libraryRoot === 'string' ? settings.libraryRoot.trim() : '';
     if (configuredLibraryRoot && fs.existsSync(configuredLibraryRoot)) {
       return { libraryRoot: configuredLibraryRoot };
-    }
-
-    if (configuredLibraryRoot && configuredLibraryRoot !== defaultLibraryRoot) {
-      writeSettingsFile(defaultLibraryRoot);
     }
 
     return {

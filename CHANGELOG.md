@@ -2,6 +2,17 @@
 
 All notable project-level changes are tracked here. Product planning history remains in `docs/product/CHANGELOG.md`.
 
+## 0.1.1-dev.10 - Stable Packaged Library Root
+
+### Fixed
+
+- Fixed packaged Windows builds opened from timestamped `*-win-unpacked` folders resolving their data root to the release folder instead of the workspace library.
+- Fixed settings reads overwriting a custom library root when that path is temporarily unavailable.
+
+### Added
+
+- Added regression tests for packaged data-root resolution and settings preservation.
+
 ## 0.1.1-dev.9 - Batch Delete And Neural Cloud Import Prep
 
 ### Added
