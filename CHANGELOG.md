@@ -2,6 +2,19 @@
 
 All notable project-level changes are tracked here. Product planning history remains in `docs/product/CHANGELOG.md`.
 
+## 0.1.1-dev.8 - Import-Safe Structured Profiles
+
+### Added
+
+- Added a shared import merge helper for import-safe character metadata refreshes.
+- Added tests that prove re-imports preserve user-written descriptions and notes.
+- Added profile-field merge behavior that refreshes stable imported fields while keeping user-created fields.
+
+### Changed
+
+- Product spec and development plan now define import/re-import protection for structured character facts.
+- Local private import scripts can use the shared helper to map official facts into `profileFields[]` without overwriting user prose.
+
 ## 0.1.1-dev.7 - Structured Character Profiles
 
 ### Added
