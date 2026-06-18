@@ -2,6 +2,18 @@
 
 All notable project-level changes are tracked here. Product planning history remains in `docs/product/CHANGELOG.md`.
 
+## 0.1.1-dev.9 - Batch Delete And Neural Cloud Import Prep
+
+### Added
+
+- Added catalog batch selection mode with select-current, clear, and danger-confirmed batch deletion.
+- Added selection-state tests for filtered batch selection boundaries.
+- Prepared a local-only Project Neural Cloud import utility for private library use.
+
+### Changed
+
+- Product spec and development plan now define batch destructive cleanup and local-only Project Neural Cloud import scope.
+
 ## 0.1.1-dev.8 - Import-Safe Structured Profiles
 
 ### Added
