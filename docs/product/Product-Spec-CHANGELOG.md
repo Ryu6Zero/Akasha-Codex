@@ -6,6 +6,7 @@
 - Kept story tags, AI tagging, synonyms, taxonomy, and destructive deletion of character-used tags out of the MVP.
 - Added a read-only character asset completeness report scope that exports JSON and Markdown reports with missing references, orphan files, size totals, and largest character folders.
 - Added structured character profile fields so official/source facts are displayed and edited separately from user-written introductions and notes.
+- Added import/re-import protection rules: official facts map into structured fields, while existing user-written introductions and notes survive metadata refreshes.
 
 ## 2026-06-16
 

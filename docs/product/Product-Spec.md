@@ -117,12 +117,15 @@ MVP scope:
 - Duplicate rows with the same normalized label and value are collapsed during normalization.
 - Existing `description` remains the user-facing introduction and must not be overwritten by structured profile editing or normalization.
 - Existing `notes` remains personal notes and maintenance comments.
+- Import and re-import tools must write official/source facts into `profileFields[]` instead of stuffing those facts into `description` or `notes`.
+- When re-importing an existing character, imported metadata may refresh matching structured fields, tags, collections, refs, and asset lists, but must preserve any existing user-written `description` and `notes`.
+- Imported profile fields should use stable ids so later imports update the same official field instead of creating near-duplicates.
 
 Non-goals for this release:
 
-- No external re-import pipeline rewrite.
 - No schema-specific editor per source game.
 - No automatic translation, field mapping, or AI profile extraction.
+- No destructive automatic cleanup of previously imported prose from existing user libraries.
 
 ## Local Test Import Requirements
 

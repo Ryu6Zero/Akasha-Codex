@@ -208,3 +208,31 @@ Acceptance criteria:
 - Saving ignores empty profile rows and collapses duplicate label/value rows.
 - Catalog search can find profile field labels, values, and groups.
 - `npm test`, `npm run build`, `npm run prepare:open-source`, and `npm run release:check` pass or report only documented environment warnings.
+
+## Phase 12: Import-Safe Structured Profile Metadata
+
+Status: implemented.
+
+Scope:
+
+- Add a shared import merge helper for local test-data import scripts.
+- Convert high-risk character import scripts to write official/source facts into `profileFields[]`.
+- Preserve existing user-written `description` and `notes` during re-imports.
+- Merge imported tags, collections, refs, assets, and profile fields without creating duplicate rows.
+- Keep the behavior local-data only; imported third-party data still stays out of the public repository and release artifacts.
+
+Key files:
+
+- `tools/character-import-merge.cjs` - shared CJS helper for import-safe character merging.
+- `tools/import-bwiki-characters.cjs` - map BWiki facts into stable structured profile fields and preserve user prose.
+- `tools/import-nikke-db-assets.cjs` - map NIKKE profile facts into structured fields and preserve user prose on repeated imports.
+- `tools/import-gamekee-character-assets.cjs` and `tools/import-duet-night-abyss-gamekee.cjs` - use import-safe writes for GameKee imports.
+- `src/storage/importCharacterMerge.test.ts` - cover profile-field upsert, user prose preservation, and array de-duplication.
+
+Acceptance criteria:
+
+- Re-importing an existing character keeps non-empty `description` and `notes` unchanged.
+- Re-importing can refresh matching imported profile fields by stable id.
+- User-created profile fields remain present after re-import.
+- Imported tags, collection ids, external refs, portrait paths, and avatar paths are de-duplicated.
+- `npm test`, `npm run build`, `npm run prepare:open-source`, and `npm run release:check` pass or report only documented environment warnings.
