@@ -11,7 +11,10 @@ const ROW_HEIGHT = CARD_HEIGHT + GRID_GAP;
 type VirtualCharacterGridProps = {
   characters: Character[];
   selectedCharacter: Character | null;
+  isBatchSelectMode: boolean;
+  selectedIds: Set<string>;
   onSelectCharacter: (id: string) => void;
+  onToggleCharacter: (id: string) => void;
   onDeleteCharacter: (character: Character) => void | Promise<void>;
 };
 
@@ -24,7 +27,10 @@ type CharacterContextMenu = {
 export function VirtualCharacterGrid({
   characters,
   selectedCharacter,
+  isBatchSelectMode,
+  selectedIds,
   onSelectCharacter,
+  onToggleCharacter,
   onDeleteCharacter,
 }: VirtualCharacterGridProps) {
   const parentRef = useRef<HTMLDivElement>(null);
@@ -107,10 +113,13 @@ export function VirtualCharacterGrid({
               {rowCharacters.map((character) => (
                 <CharacterCard
                   character={character}
+                  isBatchSelectMode={isBatchSelectMode}
+                  isBatchSelected={selectedIds.has(character.id)}
                   isSelected={selectedCharacter?.id === character.id}
                   key={character.id}
                   onOpenContextMenu={openContextMenu}
                   onSelectCharacter={onSelectCharacter}
+                  onToggleCharacter={onToggleCharacter}
                 />
               ))}
             </div>
@@ -135,22 +144,44 @@ export function VirtualCharacterGrid({
 
 function CharacterCard({
   character,
+  isBatchSelectMode,
+  isBatchSelected,
   isSelected,
   onOpenContextMenu,
   onSelectCharacter,
+  onToggleCharacter,
 }: {
   character: Character;
+  isBatchSelectMode: boolean;
+  isBatchSelected: boolean;
   isSelected: boolean;
   onOpenContextMenu: (event: MouseEvent<HTMLButtonElement>, character: Character) => void;
   onSelectCharacter: (id: string) => void;
+  onToggleCharacter: (id: string) => void;
 }) {
   return (
     <button
-      className={`catalog-card ${isSelected ? 'selected' : ''}`}
+      className={[
+        'catalog-card',
+        isSelected ? 'selected' : '',
+        isBatchSelectMode ? 'batch-mode' : '',
+        isBatchSelected ? 'batch-selected' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
       type="button"
-      onClick={() => onSelectCharacter(character.id)}
+      aria-pressed={isBatchSelectMode ? isBatchSelected : undefined}
+      onClick={() => {
+        if (isBatchSelectMode) onToggleCharacter(character.id);
+        else onSelectCharacter(character.id);
+      }}
       onContextMenu={(event) => onOpenContextMenu(event, character)}
     >
+      {isBatchSelectMode ? (
+        <span className="catalog-select-box" aria-hidden="true">
+          {isBatchSelected ? '已选' : ''}
+        </span>
+      ) : null}
       <div className="catalog-avatar">
         {character.avatarUrl || character.portraitUrl ? (
           <img

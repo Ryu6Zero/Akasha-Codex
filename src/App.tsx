@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { CatalogView } from './components/CatalogView';
 import { CollectionsView } from './components/CollectionsView';
 import { ConfirmDialog } from './components/ConfirmDialog';
@@ -13,6 +13,12 @@ import { useSound } from './hooks/useSound';
 import { useStoryActions } from './hooks/useStoryActions';
 import { LanguageProvider } from './i18n/LanguageContext';
 import { loadAppPreferences, saveAppPreferences } from './storage/appPreferences';
+import {
+  getNextVisibleSelectedIdAfterDelete,
+  getSelectedVisibleItems,
+  pruneSelectedIdsToItems,
+  selectItemIds,
+} from './storage/batchSelection';
 import {
   buildCharacterCatalogIndex,
   countCharactersByCollectionFromIndex,
@@ -37,7 +43,10 @@ import type {
 
 type AppScreen = 'home' | 'collections' | 'catalog' | 'stories';
 type DetailMode = 'view' | 'edit';
-type DeleteTarget = { type: 'character'; character: Character } | { type: 'story'; story: Story };
+type DeleteTarget =
+  | { type: 'character'; character: Character }
+  | { type: 'characters'; characters: Character[] }
+  | { type: 'story'; story: Story };
 
 export default function App() {
   return (
@@ -80,6 +89,8 @@ function AppContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
+  const [isBatchSelectMode, setIsBatchSelectMode] = useState(false);
+  const [batchSelectedIds, setBatchSelectedIds] = useState<Set<string>>(() => new Set());
   const [appPreferences, setAppPreferences] = useState<AppPreferences>(() => loadAppPreferences());
   const characterActions = useCharacterActions({ libraryClient, setCharacters, setSelectedCharacterId });
   const storyActions = useStoryActions({ libraryClient, setStories, setStoryCatalog, setSelectedStoryId });
@@ -105,8 +116,15 @@ function AppContent() {
       sortMode,
     });
   }, [catalog.collections, characterIndex, deferredSearchQuery, selectedCollectionId, selectedTag, sortMode]);
+  const batchSelectedCharacters = useMemo(
+    () => getSelectedVisibleItems(batchSelectedIds, filteredCharacters),
+    [batchSelectedIds, filteredCharacters],
+  );
 
-  const selectedCharacter = useMemo(() => (selectedCharacterId ? characterById.get(selectedCharacterId) : null) ?? filteredCharacters[0] ?? null, [characterById, filteredCharacters, selectedCharacterId]);
+  const selectedCharacter = useMemo(
+    () => filteredCharacters.find((character) => character.id === selectedCharacterId) ?? filteredCharacters[0] ?? null,
+    [filteredCharacters, selectedCharacterId],
+  );
   const fullscreenCharacter = detailCharacter ?? selectedCharacter;
   const fullscreenStoryBacklinks = useMemo(
     () => (fullscreenCharacter ? storyLinkIndex.backlinksByCharacterId.get(fullscreenCharacter.id) || [] : []),
@@ -132,6 +150,21 @@ function AppContent() {
       };
     }
 
+    if (deleteTarget.type === 'characters') {
+      const characters = deleteTarget.characters;
+      return {
+        title: `删除选中的 ${characters.length} 个角色？`,
+        message: '这个操作会逐个删除资料库中的角色文件夹和托管资源。',
+        details: [
+          `选中角色 ${characters.length} 个`,
+          `图片约 ${characters.reduce((sum, character) => sum + countCharacterImages(character), 0)} 张`,
+          `语音约 ${characters.reduce((sum, character) => sum + character.voiceAssets.length, 0)} 条`,
+          `附件约 ${characters.reduce((sum, character) => sum + countCharacterAttachments(character), 0)} 个`,
+        ],
+        confirmLabel: '确认批量删除',
+      };
+    }
+
     const story = deleteTarget.story;
     const linkedCharacterCount = storyLinkIndex.storyLinkedCharacterIds.get(story.id)?.length || 0;
     return {
@@ -145,6 +178,10 @@ function AppContent() {
       confirmLabel: '确认删除故事',
     };
   }, [deleteTarget, storyLinkIndex]);
+
+  useEffect(() => {
+    setBatchSelectedIds((currentIds) => pruneSelectedIdsToItems(currentIds, filteredCharacters));
+  }, [filteredCharacters]);
 
   function enterCollection(collectionId: string): void {
     playSound('navigation');
@@ -195,6 +232,16 @@ function AppContent() {
       playSound('save');
       setDetailCharacter(null);
       setIsFullscreenOpen(false);
+    } else if (deleteTarget.type === 'characters') {
+      const deletedIds = selectItemIds(deleteTarget.characters);
+      const nextSelectedId = getNextVisibleSelectedIdAfterDelete(filteredCharacters, deletedIds, selectedCharacterId);
+      await characterActions.deleteCharacters(deleteTarget.characters);
+      playSound('save');
+      setBatchSelectedIds(new Set());
+      setIsBatchSelectMode(false);
+      setSelectedCharacterId(nextSelectedId);
+      setDetailCharacter(null);
+      setIsFullscreenOpen(false);
     } else {
       await storyActions.deleteStory(deleteTarget.story);
       playSound('save');
@@ -204,6 +251,32 @@ function AppContent() {
 
   async function handleImportDirectory(): Promise<void> {
     await characterActions.importDirectory();
+  }
+
+  function toggleBatchSelectMode(): void {
+    setIsBatchSelectMode((currentMode) => {
+      const nextMode = !currentMode;
+      if (!nextMode) setBatchSelectedIds(new Set());
+      return nextMode;
+    });
+  }
+
+  function toggleBatchCharacter(characterId: string): void {
+    setBatchSelectedIds((currentIds) => {
+      const nextIds = new Set(currentIds);
+      if (nextIds.has(characterId)) nextIds.delete(characterId);
+      else nextIds.add(characterId);
+      return nextIds;
+    });
+  }
+
+  function selectAllVisibleCharacters(): void {
+    setBatchSelectedIds(selectItemIds(filteredCharacters));
+  }
+
+  function requestBatchDeleteCharacters(): void {
+    if (!batchSelectedCharacters.length) return;
+    setDeleteTarget({ type: 'characters', characters: batchSelectedCharacters });
   }
 
   async function handleSelectLibraryRoot(): Promise<void> {
@@ -388,6 +461,13 @@ function AppContent() {
           onSelectCharacter={setSelectedCharacterId}
           onOpenFullscreen={() => openFullscreen('view')}
           onCreateCharacter={handleCreateCharacter}
+          isBatchSelectMode={isBatchSelectMode}
+          batchSelectedIds={batchSelectedIds}
+          onToggleBatchSelectMode={toggleBatchSelectMode}
+          onToggleBatchCharacter={toggleBatchCharacter}
+          onSelectAllVisibleCharacters={selectAllVisibleCharacters}
+          onClearBatchSelection={() => setBatchSelectedIds(new Set())}
+          onRequestBatchDelete={requestBatchDeleteCharacters}
           onEditCharacter={(character) => {
             setSelectedCharacterId(character.id);
             openFullscreen('edit', character);

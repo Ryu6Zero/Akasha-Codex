@@ -43,6 +43,29 @@ export function useCharacterActions({
     return [];
   }
 
+  async function deleteCharacters(characters: Character[]): Promise<Character[]> {
+    if (!characters.length) return [];
+
+    if (libraryClient) {
+      let nextCharacters: Character[] = [];
+      for (const character of characters) {
+        nextCharacters = await libraryClient.deleteCharacter(character);
+      }
+      setCharacters(nextCharacters);
+      setSelectedCharacterId((currentId) =>
+        currentId && nextCharacters.some((character) => character.id === currentId)
+          ? currentId
+          : nextCharacters[0]?.id ?? null,
+      );
+      return nextCharacters;
+    }
+
+    const deletedIds = new Set(characters.map((character) => character.id));
+    setCharacters((currentCharacters) => currentCharacters.filter((character) => !deletedIds.has(character.id)));
+    setSelectedCharacterId((currentId) => (currentId && deletedIds.has(currentId) ? null : currentId));
+    return [];
+  }
+
   async function importDirectory(): Promise<Character[]> {
     if (!libraryClient) return [];
     const importedCharacters = await libraryClient.importCharacterDirectory();
@@ -64,6 +87,7 @@ export function useCharacterActions({
     createCharacter,
     saveCharacter,
     deleteCharacter,
+    deleteCharacters,
     importDirectory,
   };
 }

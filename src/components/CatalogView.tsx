@@ -24,6 +24,13 @@ type CatalogViewProps = {
   onCreateCharacter: () => void;
   onEditCharacter: (character: Character) => void;
   onDeleteCharacter: (character: Character) => void | Promise<void>;
+  isBatchSelectMode: boolean;
+  batchSelectedIds: Set<string>;
+  onToggleBatchSelectMode: () => void;
+  onToggleBatchCharacter: (characterId: string) => void;
+  onSelectAllVisibleCharacters: () => void;
+  onClearBatchSelection: () => void;
+  onRequestBatchDelete: () => void;
   onImportDirectory?: () => void;
   onSaveCollectionIcon?: (collectionId: string, imageDataUrl: string, fileName: string) => void | Promise<void>;
   onOpenSettings: () => void;
@@ -50,6 +57,13 @@ export function CatalogView({
   onCreateCharacter,
   onEditCharacter,
   onDeleteCharacter,
+  isBatchSelectMode,
+  batchSelectedIds,
+  onToggleBatchSelectMode,
+  onToggleBatchCharacter,
+  onSelectAllVisibleCharacters,
+  onClearBatchSelection,
+  onRequestBatchDelete,
   onImportDirectory,
   onSaveCollectionIcon,
   onOpenSettings,
@@ -109,6 +123,28 @@ export function CatalogView({
             导入
           </button>
         ) : null}
+        <button className={isBatchSelectMode ? 'active' : ''} type="button" onClick={onToggleBatchSelectMode}>
+          {isBatchSelectMode ? '退出批量' : '批量'}
+        </button>
+        {isBatchSelectMode ? (
+          <div className="batch-toolbar" aria-label="批量选择">
+            <span className="batch-count">已选 {batchSelectedIds.size}</span>
+            <button type="button" onClick={onSelectAllVisibleCharacters} disabled={!characters.length}>
+              全选当前
+            </button>
+            <button type="button" onClick={onClearBatchSelection} disabled={!batchSelectedIds.size}>
+              清空
+            </button>
+            <button
+              className="danger-button"
+              type="button"
+              onClick={onRequestBatchDelete}
+              disabled={!batchSelectedIds.size}
+            >
+              删除已选
+            </button>
+          </div>
+        ) : null}
         <button type="button" onClick={onOpenSettings}>
           设置
         </button>
@@ -143,7 +179,10 @@ export function CatalogView({
         <VirtualCharacterGrid
           characters={characters}
           selectedCharacter={selectedCharacter}
+          isBatchSelectMode={isBatchSelectMode}
+          selectedIds={batchSelectedIds}
           onDeleteCharacter={onDeleteCharacter}
+          onToggleCharacter={onToggleBatchCharacter}
           onSelectCharacter={onSelectCharacter}
         />
 
