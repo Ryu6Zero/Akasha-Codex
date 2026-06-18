@@ -27,6 +27,7 @@ import {
 import { buildStoryLinkIndex } from './storage/storyStore';
 import type {
   AppPreferences,
+  AssetCompletenessReport,
   CatalogMetadata,
   Character,
   CropImageSelection,
@@ -297,6 +298,13 @@ function AppContent() {
     playSound('save');
   }
 
+  async function handleGenerateAssetCompletenessReport(): Promise<AssetCompletenessReport> {
+    if (!libraryClient) throw new Error('素材完整性报告需要桌面资料库。');
+    const report = await libraryClient.generateAssetCompletenessReport();
+    playSound('save');
+    return report;
+  }
+
   async function handleMergeCharacterTag(sourceTag: string, targetTag: string): Promise<void> {
     const previewMutation = applyTagMerge(characters, catalog, sourceTag, targetTag);
 
@@ -445,6 +453,7 @@ function AppContent() {
           onImportWallpaper={handleImportWallpaper}
           onSaveCatalog={handleSaveCatalog}
           onSaveAppPreferences={handleSaveAppPreferences}
+          onGenerateAssetCompletenessReport={handleGenerateAssetCompletenessReport}
           onMergeCharacterTag={handleMergeCharacterTag}
           onDeleteUnusedCharacterTagRule={handleDeleteUnusedCharacterTagRule}
           onImportCollectionIcon={libraryClient ? handleImportCollectionIcon : undefined}

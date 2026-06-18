@@ -6,6 +6,7 @@ import { normalizeCharacter } from '../storage/characterStore';
 import { applyStoryImage, normalizeStory, normalizeStoryCatalog, stripStoryUrls } from '../storage/storyStore';
 import { assertManagedLibraryPath, isManagedLibraryPath, normalizeLibraryPath } from './libraryPathGuard';
 import type {
+  AssetCompletenessReport,
   AssetType,
   CatalogAssetType,
   CatalogMetadata,
@@ -54,6 +55,7 @@ export function createMobileLibraryClient(): LibraryClient {
     removeStoryImage,
     getLibraryCharacterSummaries,
     getCharacter,
+    generateAssetCompletenessReport,
     getLibraryCharacters,
     saveCharacter,
     deleteCharacter,
@@ -65,6 +67,11 @@ export function createMobileLibraryClient(): LibraryClient {
     removeAsset,
     importCharacterDirectory: async () => [],
   };
+}
+
+async function generateAssetCompletenessReport(): Promise<AssetCompletenessReport> {
+  await ensureLibraryStructure();
+  throw new Error('Android 端暂不支持素材完整性报告，请先在桌面端生成。');
 }
 
 async function getLibraryInfo() {

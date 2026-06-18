@@ -1,11 +1,13 @@
 const { app, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron');
 const path = require('path');
+const { createAssetReportService } = require('./asset-report-service.cjs');
 const { createCatalogService } = require('./catalog-service.cjs');
 const { createCharacterService } = require('./character-service.cjs');
 const { createLibraryContext } = require('./library-context.cjs');
 const { createStoryService } = require('./story-service.cjs');
 
 const context = createLibraryContext(app);
+const assetReportService = createAssetReportService(context);
 const catalogService = createCatalogService(context, dialog);
 const characterService = createCharacterService(context, dialog);
 const storyService = createStoryService(context, dialog);
@@ -40,6 +42,7 @@ function registerIpcHandlers() {
     charactersRoot: context.getCharactersRoot(),
     storiesRoot: context.getStoriesRoot(),
   }));
+  ipcMain.handle('library:generateAssetCompletenessReport', () => assetReportService.generateAssetCompletenessReport());
   ipcMain.handle('library:openRoot', async () => {
     const libraryRoot = context.getLibraryRoot();
     context.ensureDirectory(libraryRoot);

@@ -847,6 +847,48 @@
   white-space: nowrap;
 }
 
+.asset-report-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(106px, 1fr));
+  gap: 8px;
+}
+
+.asset-report-stat {
+  display: grid;
+  gap: 4px;
+  min-height: 68px;
+  border: 1px solid rgba(90, 200, 184, 0.24);
+  border-radius: 8px;
+  background: rgba(90, 200, 184, 0.09);
+  padding: 10px;
+}
+
+.asset-report-stat strong {
+  color: #dffbf7;
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+
+.asset-report-stat span {
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.asset-report-stat.warning {
+  border-color: rgba(255, 110, 110, 0.38);
+  background: rgba(255, 110, 110, 0.1);
+}
+
+.asset-report-stat.warning strong {
+  color: #ffb4a9;
+}
+
+.asset-report-paths {
+  display: grid;
+  gap: 8px;
+}
+
 .category-editor-actions {
   display: flex;
   flex-wrap: wrap;

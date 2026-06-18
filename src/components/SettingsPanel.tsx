@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { TagGovernanceItem } from '../storage/tagGovernance';
-import type { AppPreferences, CatalogMetadata, LibrarySettings } from '../types';
+import type { AppPreferences, AssetCompletenessReport, CatalogMetadata, LibrarySettings } from '../types';
+import { AssetReportPanel } from './AssetReportPanel';
 import { CollectionManagerPanel } from './CollectionManagerPanel';
 import { TagGovernancePanel } from './TagGovernancePanel';
 
@@ -15,6 +16,7 @@ type SettingsPanelProps = {
   onImportWallpaper: () => void | Promise<void>;
   onSaveCatalog: (catalog: CatalogMetadata) => void | Promise<void>;
   onSaveAppPreferences: (preferences: AppPreferences) => void | Promise<void>;
+  onGenerateAssetCompletenessReport: () => Promise<AssetCompletenessReport>;
   onMergeCharacterTag: (sourceTag: string, targetTag: string) => void | Promise<void>;
   onDeleteUnusedCharacterTagRule: (tag: string) => void | Promise<void>;
   onImportCollectionIcon?: (collectionId: string) => void | Promise<void>;
@@ -32,6 +34,7 @@ export function SettingsPanel({
   onImportWallpaper,
   onSaveCatalog,
   onSaveAppPreferences,
+  onGenerateAssetCompletenessReport,
   onMergeCharacterTag,
   onDeleteUnusedCharacterTagRule,
   onImportCollectionIcon,
@@ -159,6 +162,8 @@ export function SettingsPanel({
             </label>
           </div>
         </section>
+
+        <AssetReportPanel onGenerateReport={onGenerateAssetCompletenessReport} />
 
         <TagGovernancePanel
           tagGovernanceItems={tagGovernanceItems}

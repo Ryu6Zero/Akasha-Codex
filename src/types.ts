@@ -146,6 +146,54 @@ export type LibraryHealthReport = {
   issues: LibraryHealthIssue[];
 };
 
+export type AssetReportFileIssue = {
+  path: string;
+  sizeBytes?: number;
+};
+
+export type CharacterAssetReport = {
+  characterId: string;
+  name: string;
+  sourceTitle: string;
+  counts: {
+    avatars: number;
+    portraits: number;
+    voices: number;
+    models: number;
+    attachments: number;
+  };
+  missingFlags: {
+    primaryAvatar: boolean;
+    portrait: boolean;
+    description: boolean;
+  };
+  missingAssetReferences: AssetReportFileIssue[];
+  orphanFiles: AssetReportFileIssue[];
+  totalSizeBytes: number;
+};
+
+export type AssetCompletenessReport = {
+  generatedAt: string;
+  libraryRoot: string;
+  outputPaths?: {
+    json: string;
+    markdown: string;
+  };
+  summary: {
+    characterCount: number;
+    avatarCount: number;
+    portraitCount: number;
+    voiceCount: number;
+    modelCount: number;
+    attachmentCount: number;
+    missingAssetReferenceCount: number;
+    orphanFileCount: number;
+    totalSizeBytes: number;
+  };
+  largestCharacters: CharacterAssetReport[];
+  characters: CharacterAssetReport[];
+};
+
 export type Character = {
   id: string;
   name: string;
@@ -229,6 +277,7 @@ export type AcgplanDesktopApi = {
   saveCroppedWallpaper: (imageDataUrl: string, fileName: string) => Promise<CatalogMetadata>;
   removeAsset: (character: Character, assetType: AssetType, assetPath: string) => Promise<Character>;
   importCharacterDirectory: (sourceDirectory?: string) => Promise<Character[]>;
+  generateAssetCompletenessReport: () => Promise<AssetCompletenessReport>;
 };
 
 declare global {
