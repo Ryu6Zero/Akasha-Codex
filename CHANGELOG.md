@@ -2,6 +2,19 @@
 
 All notable project-level changes are tracked here. Product planning history remains in `docs/product/CHANGELOG.md`.
 
+## 0.1.1-dev.5 - Tag Governance Center
+
+### Added
+
+- Settings now includes a character tag governance surface with usage counts and invalid collection-rule detection.
+- Added tag merge/rename logic that updates affected character tags and collection tag rules together.
+- Added unused tag-rule cleanup for tags no character currently uses.
+- Added unit tests for tag usage indexing, invalid rules, merge behavior, and cleanup guards.
+
+### Changed
+
+- Product spec and development plan now define the tag governance MVP boundary.
+
 ## 0.1.1-dev.4 - Catalog Scale And Release Guardrails
 
 ### Added
