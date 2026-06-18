@@ -47,6 +47,8 @@
   .story-workspace,
   .detail-body,
   .editor-two-column,
+  .tag-governance-controls,
+  .tag-governance-row,
   .category-editor-card,
   .story-category-card,
   .asset-import-grid,
@@ -58,6 +60,10 @@
   .category-rules-field,
   .category-editor-actions {
     grid-column: 1 / -1;
+  }
+
+  .tag-governance-actions {
+    justify-content: flex-start;
   }
 
   .catalog-workspace {
@@ -134,6 +140,7 @@
   .top-nav > *,
   .detail-actions,
   .drawer-actions,
+  .tag-governance-actions,
   .category-editor-actions,
   .lightbox-tools,
   .lightbox-navigation button {

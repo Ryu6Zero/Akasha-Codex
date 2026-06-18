@@ -19,6 +19,11 @@ import {
   filterCharacterIndexForCatalog,
   getAvailableCharacterTagsFromIndex,
 } from './storage/characterQueries';
+import {
+  applyTagMerge,
+  applyUnusedTagRuleDelete,
+  buildCharacterTagGovernanceIndex,
+} from './storage/tagGovernance';
 import { buildStoryLinkIndex } from './storage/storyStore';
 import type {
   AppPreferences,
@@ -84,6 +89,10 @@ function AppContent() {
   const characterById = useMemo(() => new Map(characters.map((character) => [character.id, character])), [characters]);
   const storyLinkIndex = useMemo(() => buildStoryLinkIndex(stories, characters), [characters, stories]);
   const availableTags = useMemo(() => getAvailableCharacterTagsFromIndex(characterIndex), [characterIndex]);
+  const tagGovernanceItems = useMemo(
+    () => buildCharacterTagGovernanceIndex(characters, catalog),
+    [catalog, characters],
+  );
 
   const filteredCharacters = useMemo(() => {
     return filterCharacterIndexForCatalog({
@@ -288,6 +297,45 @@ function AppContent() {
     playSound('save');
   }
 
+  async function handleMergeCharacterTag(sourceTag: string, targetTag: string): Promise<void> {
+    const previewMutation = applyTagMerge(characters, catalog, sourceTag, targetTag);
+
+    if (libraryClient) {
+      for (const characterId of previewMutation.changedCharacterIds) {
+        const fullCharacter = await libraryClient.getCharacter(characterId);
+        if (!fullCharacter) continue;
+        const nextCharacter = applyTagMerge([fullCharacter], catalog, sourceTag, targetTag).characters[0];
+        await libraryClient.saveCharacter(nextCharacter);
+      }
+      await libraryClient.saveCatalog(previewMutation.catalog);
+      await reloadLibrary();
+    } else {
+      setCharacters(previewMutation.characters);
+      setCatalog(previewMutation.catalog);
+    }
+
+    setSelectedTag((currentTag) =>
+      currentTag && normalizeTagKey(currentTag) === normalizeTagKey(sourceTag) ? targetTag.trim() : currentTag,
+    );
+    playSound('save');
+  }
+
+  async function handleDeleteUnusedCharacterTagRule(tag: string): Promise<void> {
+    const mutation = applyUnusedTagRuleDelete(characters, catalog, tag);
+
+    if (libraryClient) {
+      await libraryClient.saveCatalog(mutation.catalog);
+      await reloadLibrary();
+    } else {
+      setCatalog(mutation.catalog);
+    }
+
+    setSelectedTag((currentTag) =>
+      currentTag && normalizeTagKey(currentTag) === normalizeTagKey(tag) ? '' : currentTag,
+    );
+    playSound('save');
+  }
+
   return (
     <main className={`app-root screen-${screen}`}>
       {screen === 'home' ? (
@@ -389,6 +437,7 @@ function AppContent() {
           catalog={catalog}
           appPreferences={appPreferences}
           availableTags={availableTags}
+          tagGovernanceItems={tagGovernanceItems}
           onSelectLibraryRoot={handleSelectLibraryRoot}
           onOpenLibraryRoot={async () => {
             await libraryClient?.openLibraryRoot();
@@ -396,6 +445,8 @@ function AppContent() {
           onImportWallpaper={handleImportWallpaper}
           onSaveCatalog={handleSaveCatalog}
           onSaveAppPreferences={handleSaveAppPreferences}
+          onMergeCharacterTag={handleMergeCharacterTag}
+          onDeleteUnusedCharacterTagRule={handleDeleteUnusedCharacterTagRule}
           onImportCollectionIcon={libraryClient ? handleImportCollectionIcon : undefined}
           onClose={() => setIsSettingsOpen(false)}
         />
@@ -441,4 +492,8 @@ function countCharacterImages(character: Character): number {
 
 function countCharacterAttachments(character: Character): number {
   return (character.modelPaths?.length || (character.modelPath ? 1 : 0)) + (character.attachmentPaths?.length || 0);
+}
+
+function normalizeTagKey(value: string): string {
+  return value.trim().toLowerCase();
 }
